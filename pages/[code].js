@@ -225,9 +225,9 @@ function OrderCard({ order, index, isNew }) {
           onClick={copyId}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            background: 'none', border: '1px solid #1F2937',
+            background: 'none', border: '1px solid #F9FAFB',
             borderRadius: 8, padding: '5px 10px', cursor: trackingId ? 'pointer' : 'default',
-            color: copied ? '#10B981' : '#6B7280',
+            color: copied ? '#10B981' : '#F9FAFB',
             fontSize: 11, fontFamily: 'monospace',
             transition: 'color 0.2s, border-color 0.2s',
           }}
