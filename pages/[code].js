@@ -513,29 +513,24 @@ export default function TrackingPage({ code, config }) {
               <LangPicker lang={lang} setLang={setLang} />
 
               <button
-                onClick={() => fetchOrders(true)}
-                disabled={refreshing}
-                style={{
-                  display:'flex', alignItems:'center', gap:8,
-                  padding:'6px 12px', background:'#0D1117',
-                  border:'1px solid #1F2937', borderRadius:999,
-                  cursor: refreshing ? 'default' : 'pointer',
-                  color:'inherit', fontFamily:"'DM Sans',sans-serif",
-                }}
-              >
-                {refreshing
-                  ? <span style={{ fontSize:11, display:'inline-block', animation:'spin 0.8s linear infinite' }}>🔄</span>
-                  : <LiveDot />
-                }
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:1 }}>
-                  <span style={{ fontSize:11, color:'#FFFFFF', lineHeight:1 }}>
-                    {refreshing ? t.updating : (syncTime || '–– : ––')}
-                  </span>
-                  {!refreshing && (
-                    <span style={{ fontSize:9, color:'#FFFFFF', lineHeight:1 }}>{t.tapToRefresh}</span>
-                  )}
-                </div>
-              </button>
+              onClick={() => fetchOrders(true)}
+              disabled={refreshing}
+              style={{
+                display:'flex', alignItems:'center', gap:8,
+                padding:'10px 16px', background:'#0D1117',
+                border:'1px solid #1F2937', borderRadius:999,
+                cursor: refreshing ? 'default' : 'pointer',
+                color:'inherit', fontFamily:"'DM Sans',sans-serif",
+              }}
+            >
+              <span style={{
+                fontSize:14, display:'inline-block',
+                animation: refreshing ? 'spin 0.8s linear infinite' : 'none',
+              }}>🔄</span>
+              <span style={{ fontSize:13, color:'#F9FAFB', fontWeight:600, lineHeight:1 }}>
+                {refreshing ? 'Updating…' : 'Tap to refresh'}
+              </span>
+            </button>
             </div>
           </div>
         </div>
@@ -622,57 +617,55 @@ export default function TrackingPage({ code, config }) {
         )}
 
        {/* ── Cards ── */}
-{!loading && filtered.length > 0 && (
-  <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-    {(() => {
-      const items = [];
-      let lastDate = null;
-      filtered.forEach((order, i) => {
-        const dateLabel = order.shippedOn || '';
-        if (dateLabel && dateLabel !== lastDate) {
-          lastDate = dateLabel;
-          items.push(
-            <div key={`date-${dateLabel}-${i}`} style={{
-              position: 'sticky',
-              top: 57,
-              zIndex: 40,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              margin: '4px 0',
-            }}>
-              <div style={{ flex:1, height:1, background:'#1F2937' }} />
-              <div style={{
-                padding: '4px 14px',
-                background: '#0B0F19',
-                border: '1px solid #1F2937',
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#9CA3AF',
-                letterSpacing: '0.06em',
-                whiteSpace: 'nowrap',
-              }}>
-                {dateLabel}
-              </div>
-              <div style={{ flex:1, height:1, background:'#1F2937' }} />
-            </div>
-          );
-        }
-        items.push(
-          <OrderCard
-            key={order.orderId || i}
-            order={order}
-            index={i}
-            isNew={order.isNew && !search && i === 0}
-          />
-        );
-      });
-      return items;
-    })()}
-  </div>
-)}
-
+{/* ── Cards ── */}
+        {!loading && filtered.length > 0 && (
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            {(() => {
+              const items = [];
+              let lastDate = null;
+              filtered.forEach((order, i) => {
+                const dateLabel = order.shippedOn || '';
+                if (dateLabel && dateLabel !== lastDate) {
+                  lastDate = dateLabel;
+                  items.push(
+                    <div key={`date-${dateLabel}-${i}`} style={{
+                      position: 'sticky',
+                      top: 132,
+                      zIndex: 30,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      margin: '6px 0 2px',
+                    }}>
+                      <div style={{
+                        padding: '8px 20px',
+                        background: '#0B0F19',
+                        border: '1px solid #1F2937',
+                        borderRadius: 999,
+                        fontSize: 15,
+                        fontWeight: 800,
+                        fontFamily: "'Syne', sans-serif",
+                        color: '#F9FAFB',
+                        letterSpacing: '0.02em',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                      }}>
+                        📅 {dateLabel}
+                      </div>
+                    </div>
+                  );
+                }
+                items.push(
+                  <OrderCard
+                    key={order.orderId || i}
+                    order={order}
+                    index={i}
+                    isNew={order.isNew && !search && i === 0}
+                  />
+                );
+              });
+              return items;
+            })()}
+          </div>
+        )}
       </main>
 
       {bottomBar && <BottomBar bar={bottomBar} />}
