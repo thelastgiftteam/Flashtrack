@@ -643,7 +643,7 @@ export default function TrackingPage({ code, config }) {
                         borderRadius: 999,
                         fontSize: 15,
                         fontWeight: 800,
-                        fontFamily: "'Syne', sans-serif",
+                        fontFamily: "Sans-serif",
                         color: '#F9FAFB',
                         letterSpacing: '0.02em',
                         boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
