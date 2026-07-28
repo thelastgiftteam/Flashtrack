@@ -621,19 +621,57 @@ export default function TrackingPage({ code, config }) {
           </div>
         )}
 
-        {/* ── Cards ── */}
-        {!loading && filtered.length > 0 && (
-          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-            {filtered.map((order, i) => (
-              <OrderCard
-                key={order.orderId || i}
-                order={order}
-                index={i}
-                isNew={order.isNew && !search && i === 0}
-              />
-            ))}
-          </div>
-        )}
+       {/* ── Cards ── */}
+{!loading && filtered.length > 0 && (
+  <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+    {(() => {
+      const items = [];
+      let lastDate = null;
+      filtered.forEach((order, i) => {
+        const dateLabel = order.shippedOn || '';
+        if (dateLabel && dateLabel !== lastDate) {
+          lastDate = dateLabel;
+          items.push(
+            <div key={`date-${dateLabel}-${i}`} style={{
+              position: 'sticky',
+              top: 57,
+              zIndex: 40,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              margin: '4px 0',
+            }}>
+              <div style={{ flex:1, height:1, background:'#1F2937' }} />
+              <div style={{
+                padding: '4px 14px',
+                background: '#0B0F19',
+                border: '1px solid #1F2937',
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#9CA3AF',
+                letterSpacing: '0.06em',
+                whiteSpace: 'nowrap',
+              }}>
+                {dateLabel}
+              </div>
+              <div style={{ flex:1, height:1, background:'#1F2937' }} />
+            </div>
+          );
+        }
+        items.push(
+          <OrderCard
+            key={order.orderId || i}
+            order={order}
+            index={i}
+            isNew={order.isNew && !search && i === 0}
+          />
+        );
+      });
+      return items;
+    })()}
+  </div>
+)}
 
       </main>
 
