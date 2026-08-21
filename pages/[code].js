@@ -37,7 +37,7 @@ const T = {
     orderTracking:   'ORDER TRACKING',
     tapToRefresh:    'Tap to refresh',
     updating:        'Updating…',
-    searchPlaceholder: 'Search by name or order ID...',
+    searchPlaceholder: 'Search by name, pincode or order ID...',
     liveOrders:      'LIVE ORDERS',
     results:         n => `${n} RESULT${n !== 1 ? 'S' : ''}`,
     noOrders:        'No active orders right now',
@@ -436,7 +436,10 @@ export default function TrackingPage({ code, config }) {
   const filtered = orders.filter(o => {
     const q = search.toLowerCase().trim();
     if (!q) return true;
-    return o.name?.toLowerCase().includes(q) || o.orderId?.toLowerCase().includes(q);
+    return o.name?.toLowerCase().includes(q)
+      || o.orderId?.toLowerCase().includes(q)
+      || String(o.pincode || '').toLowerCase().includes(q)
+      || o.trackingId?.toLowerCase().includes(q);
   });
 
   if (config?.suspended) {
