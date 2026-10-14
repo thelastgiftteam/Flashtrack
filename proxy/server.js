@@ -90,9 +90,13 @@ async function trackOne(code, brand, id) {
 
 // ── Turn India Post's response into what the page needs ──
 function normalize(id, body) {
-  const item = Array.isArray(body.data)
-    ? body.data.find(d => d?.booking_details?.article_number === id) || body.data[0]
-    : null;
+  // India Post documents two formats: the bulk one (booking_details /
+  // tracking_details, from the onboarding doc) and the single-parcel one
+  // (trackingNumber / currentStatus / history, from the portal docs).
+  // Accept either, so whichever the live API sends still works.
+  const list = Array.isArray(body.data) ? body.data : (body.data ? [body.data] : []);
+  const items = list.map(d => (d && !d.booking_details && (d.history || d.trackingNumber)) ? fromSingleFormat(d) : d);
+  const item = items.find(d => d?.booking_details?.article_number === id) || items[0];
   if (!item) return { found: false, id };
 
   const b = item.booking_details || {};
@@ -108,8 +112,8 @@ function normalize(id, body) {
     .sort((a, c) => (a.date < c.date ? 1 : a.date > c.date ? -1 : 0)); // newest first
 
   const delStatus = String(item?.del_status?.del_status || '').toLowerCase();
-  const delivered = delStatus === 'delivered' || !!b.delivery_confirmed_on;
   const latest    = (events[0]?.event || '').toLowerCase();
+  const delivered = delStatus === 'delivered' || !!b.delivery_confirmed_on || latest === 'item delivered';
 
   let status = 'In transit';
   if (!events.length)                            status = 'Booked';
@@ -138,6 +142,24 @@ function normalize(id, body) {
   };
 }
 
+// Convert the single-parcel format into the bulk format normalize() reads.
+function fromSingleFormat(s) {
+  const history = Array.isArray(s.history) ? s.history : [];
+  return {
+    booking_details: {
+      article_number:    String(s.trackingNumber || ''),
+      booked_at:         String(s.origin || ''),
+      delivery_location: String(s.destination || ''),
+    },
+    tracking_details: history.map(h => {
+      const ts = String(h.timestamp || '');
+      const st = String(h.status || '');
+      return { date: ts, time: ts.slice(11, 19), office: String(h.location || ''), event: st, remarks: '', rts: /return/i.test(st) };
+    }),
+    del_status: { del_status: String(s.currentStatus || '').toLowerCase() === 'delivered' ? 'delivered' : '' },
+  };
+}
+
 function httpError(status, message) {
   const e = new Error(message); e.status = status; return e;
 }
@@ -153,10 +175,59 @@ function safeEqual(a, b) {
   return x.length === y.length && require('crypto').timingSafeEqual(x, y);
 }
 
+// ── Webhook receiver: India Post pushes article events here ──
+// POST /webhook/booking and /webhook/other. Each event is appended as one JSON
+// line to events/YYYY-MM-DD.jsonl (IST date). Nothing is processed yet; the
+// file is the record we build alerts from later.
+const EVENTS_DIR    = process.env.EVENTS_DIR || path.join(__dirname, 'events');
+const WEBHOOK_KINDS = { '/webhook/booking': 'booking', '/webhook/other': 'other' };
+const MAX_BODY      = 1024 * 1024; // 1 MB
+
+function istDate() {
+  return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+function handleWebhook(req, res, kind) {
+  // The portal's "Test" button may check the URL with GET/HEAD first.
+  if (req.method === 'GET' || req.method === 'HEAD') return send(res, 200, { success: true });
+  if (req.method !== 'POST') return send(res, 405, { error: 'method not allowed' });
+
+  let size = 0;
+  const chunks = [];
+  req.on('data', c => {
+    size += c.length;
+    if (size > MAX_BODY) { send(res, 413, { error: 'too large' }); req.destroy(); return; }
+    chunks.push(c);
+  });
+  req.on('end', () => {
+    if (res.writableEnded) return;
+    const raw = Buffer.concat(chunks).toString('utf8');
+    let body;
+    try { body = JSON.parse(raw); } catch { body = raw; }
+    const line = JSON.stringify({
+      received_at: new Date().toISOString(),
+      kind,
+      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      body,
+    });
+    try {
+      fs.mkdirSync(EVENTS_DIR, { recursive: true });
+      fs.appendFileSync(path.join(EVENTS_DIR, istDate() + '.jsonl'), line + '\n');
+    } catch (e) {
+      console.error(new Date().toISOString(), 'webhook write failed:', e.message);
+      return send(res, 500, { success: false });
+    }
+    const n = Array.isArray(body) ? body.length : 1;
+    console.log(new Date().toISOString(), 'webhook', kind, n, 'event(s)');
+    return send(res, 200, { success: true });
+  });
+}
+
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
 
   if (url.pathname === '/health') return send(res, 200, { ok: true });
+  if (WEBHOOK_KINDS[url.pathname]) return handleWebhook(req, res, WEBHOOK_KINDS[url.pathname]);
   if (req.method !== 'GET' || url.pathname !== '/track') return send(res, 404, { error: 'not found' });
   if (!safeEqual(req.headers['x-proxy-secret'] || '', PROXY_SECRET)) return send(res, 401, { error: 'unauthorized' });
 
