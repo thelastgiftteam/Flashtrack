@@ -9,7 +9,10 @@ export const config = {
   api: { bodyParser: { sizeLimit: '10mb' } },
 };
 
+import { requireCsm } from '../../lib/csmAuth';
+
 export default async function handler(req, res) {
+  if (!requireCsm(req, res)) return;
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

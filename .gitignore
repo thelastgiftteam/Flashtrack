@@ -1,1 +1,3 @@
 proxy/brands.json
+node_modules/
+.next/
