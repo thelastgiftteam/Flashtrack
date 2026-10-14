@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 
-const CSM_USERNAME = 'csmstebin';
-const CSM_PASSWORD = '11421';
-const CSM_SECRET   = 'flashtrack_csm';
+// Login is checked on the server (/api/csm-login). No credentials live in this file.
 const HQ_ENDPOINT  = '/api/hq-proxy';
 const MAX_TABS     = 5;
 
@@ -50,7 +48,7 @@ export default function OCRPage() {
         ::-webkit-scrollbar-thumb{background:#374151;border-radius:4px;}
       `}</style>
       {authed
-        ? <Dashboard onLogout={() => { sessionStorage.removeItem('csm_auth'); setAuthed(false); }} />
+        ? <Dashboard onLogout={() => { sessionStorage.removeItem('csm_auth'); setAuthed(false); fetch('/api/csm-logout', { method:'POST' }).catch(() => {}); }} />
         : <LoginScreen onSuccess={() => setAuthed(true)} />
       }
     </>
@@ -66,18 +64,26 @@ function LoginScreen({ onSuccess }) {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e?.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      if (u.trim() === CSM_USERNAME && p === CSM_PASSWORD) {
+    setErr('');
+    try {
+      const r = await fetch('/api/csm-login', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ username:u, password:p }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
         sessionStorage.setItem('csm_auth', 'ok');
         onSuccess();
-      } else {
-        setErr('Wrong username or password');
-        setLoading(false);
+        return;
       }
-    }, 300);
+      setErr(d.error || 'Wrong username or password');
+    } catch {
+      setErr('Could not reach the server');
+    }
+    setLoading(false);
   };
 
   return (
@@ -95,7 +101,7 @@ function LoginScreen({ onSuccess }) {
         </div>
         <form onSubmit={submit} style={{ background:'#0D1117', border:'1px solid #1F2937', borderRadius:18, padding:28 }}>
           <label style={labelStyle}>USERNAME</label>
-          <input type="text" value={u} onChange={e=>setU(e.target.value)} placeholder="csmstebin" style={inputStyle} />
+          <input type="text" value={u} onChange={e=>setU(e.target.value)} placeholder="username" style={inputStyle} />
           <label style={{ ...labelStyle, marginTop:16, display:'block' }}>PASSWORD</label>
           <input type="password" value={p} onChange={e=>setP(e.target.value)} placeholder="••••••" style={inputStyle} />
           {err && (
@@ -204,8 +210,8 @@ function Dashboard({ onLogout }) {
   const [customerView, setCustomerView] = useState(null);
 
   useEffect(() => {
-    fetch(`${HQ_ENDPOINT}?action=getCustomers&secret=${CSM_SECRET}`)
-      .then(r => r.json())
+    fetch(`${HQ_ENDPOINT}?action=getCustomers`)
+      .then(r => { if (r.status === 401) { onLogout(); return {}; } return r.json(); })
       .then(d => { setCustomers(d.customers || []); setLoadingCust(false); })
       .catch(() => setLoadingCust(false));
   }, []);
