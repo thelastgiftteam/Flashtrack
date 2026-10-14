@@ -90,9 +90,13 @@ async function trackOne(code, brand, id) {
 
 // ── Turn India Post's response into what the page needs ──
 function normalize(id, body) {
-  const item = Array.isArray(body.data)
-    ? body.data.find(d => d?.booking_details?.article_number === id) || body.data[0]
-    : null;
+  // India Post documents two formats: the bulk one (booking_details /
+  // tracking_details, from the onboarding doc) and the single-parcel one
+  // (trackingNumber / currentStatus / history, from the portal docs).
+  // Accept either, so whichever the live API sends still works.
+  const list = Array.isArray(body.data) ? body.data : (body.data ? [body.data] : []);
+  const items = list.map(d => (d && !d.booking_details && (d.history || d.trackingNumber)) ? fromSingleFormat(d) : d);
+  const item = items.find(d => d?.booking_details?.article_number === id) || items[0];
   if (!item) return { found: false, id };
 
   const b = item.booking_details || {};
@@ -108,8 +112,8 @@ function normalize(id, body) {
     .sort((a, c) => (a.date < c.date ? 1 : a.date > c.date ? -1 : 0)); // newest first
 
   const delStatus = String(item?.del_status?.del_status || '').toLowerCase();
-  const delivered = delStatus === 'delivered' || !!b.delivery_confirmed_on;
   const latest    = (events[0]?.event || '').toLowerCase();
+  const delivered = delStatus === 'delivered' || !!b.delivery_confirmed_on || latest === 'item delivered';
 
   let status = 'In transit';
   if (!events.length)                            status = 'Booked';
@@ -135,6 +139,24 @@ function normalize(id, body) {
     },
     events,
     fetchedAt: new Date().toISOString(),
+  };
+}
+
+// Convert the single-parcel format into the bulk format normalize() reads.
+function fromSingleFormat(s) {
+  const history = Array.isArray(s.history) ? s.history : [];
+  return {
+    booking_details: {
+      article_number:    String(s.trackingNumber || ''),
+      booked_at:         String(s.origin || ''),
+      delivery_location: String(s.destination || ''),
+    },
+    tracking_details: history.map(h => {
+      const ts = String(h.timestamp || '');
+      const st = String(h.status || '');
+      return { date: ts, time: ts.slice(11, 19), office: String(h.location || ''), event: st, remarks: '', rts: /return/i.test(st) };
+    }),
+    del_status: { del_status: String(s.currentStatus || '').toLowerCase() === 'delivered' ? 'delivered' : '' },
   };
 }
 
