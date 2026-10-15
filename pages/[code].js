@@ -6,39 +6,24 @@ import { C, FONT_HREF, BASE_CSS } from '../lib/ftTheme';
 const BG_REFRESH_MS = 30 * 60 * 1000; // shipments change once a day; no need to poll often
 
 // ─── Static generation ────────────────────────────────────────────
-// Brands in the database come first. Brands still on Google Sheets fall back
-// to the HQ Apps Script, exactly as before.
 export async function getStaticPaths() {
   return { paths: [], fallback: 'blocking' };
 }
 
 export async function getStaticProps({ params }) {
   const code = String(params.code || '').toLowerCase();
-
-  if (process.env.DATABASE_URL) {
-    try {
-      const { publicBrand, publicOrders } = await import('../lib/brands');
-      const b = await publicBrand(code);
-      if (b) {
-        const { _id, _trackingMode, ...config } = b;
-        const data = config.suspended ? { orders: [], version: 0 } : await publicOrders(b);
-        // Uploads and setting changes refresh this page at once; this is a backstop.
-        return { props: { code, config, initial: data }, revalidate: 3600 };
-      }
-    } catch (e) {
-      console.error('db brand lookup failed', e);
-    }
-  }
-
-  const HQ = process.env.HQ_ENDPOINT;
-  if (!HQ) return { notFound: true, revalidate: 60 };
+  if (!process.env.DATABASE_URL) return { notFound: true, revalidate: 60 };
   try {
-    const res  = await fetch(`${HQ}?action=resolve&code=${code}`);
-    const data = await res.json();
-    if (!data.found) return { notFound: true, revalidate: 60 };
-    return { props: { code, config: data, initial: null }, revalidate: 300 };
-  } catch {
-    return { notFound: true, revalidate: 60 };
+    const { publicBrand, publicOrders } = await import('../lib/brands');
+    const b = await publicBrand(code);
+    if (!b) return { notFound: true, revalidate: 60 };
+    const { _id, _trackingMode, ...config } = b;
+    const data = config.suspended ? { orders: [], version: 0 } : await publicOrders(b);
+    // Uploads and setting changes refresh this page at once; this is a backstop.
+    return { props: { code, config, initial: data }, revalidate: 3600 };
+  } catch (e) {
+    console.error('brand lookup failed', e);
+    return { notFound: true, revalidate: 30 };
   }
 }
 

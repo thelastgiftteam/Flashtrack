@@ -43,17 +43,27 @@ Then Deployments → latest → **Redeploy**.
 - Brands sign up themselves at `flashtrack.io/signup` (14-day free trial),
   or you add them under **Brands → Add brand** and send them the login.
 
+## Updating the database later
+
+When an update says "run the schema again", open Supabase → SQL Editor → paste
+`db/schema.sql` → Run. It only adds what's missing; existing data is untouched.
+
+Logins lock for 15 minutes after 8 wrong passwords for a brand (5 for the team),
+and one network can create at most 5 brands an hour.
+
 ## 4. Move WT Frames off Google Sheets
 
 1. Admin → Brands → Add brand. Name: WT Frames. Link code: `247235` (keeps the same link).
 2. Open the brand → **Add shipments** → upload the latest India Post Excel file.
-3. Open `flashtrack.io/247235`. It now reads from the database.
-   The Google Sheet is no longer used for this brand.
+3. Open `flashtrack.io/247235`. It reads from the database.
+
+The Google Sheets system has been removed. You can delete the HQ sheet, the brand
+sheets, their Apps Scripts, and the `HQ_ENDPOINT`, `CSM_*`, `REVALIDATE_SECRET`,
+`TRACK_PROXY_*` settings in Vercel.
 
 ## How it fits together
 
-- `flashtrack.io/<code>`: customer page. Reads the database; falls back to the
-  Google Sheets HQ for brands not in the database yet.
+- `flashtrack.io/<code>`: customer page, read from the database.
 - `flashtrack.io/app`: brand dashboard (home, add shipments, shipments, page, plan, account).
 - `flashtrack.io/admin`: team console (today, brands, payments, team).
 - The customer page is cached and refreshed the moment a brand uploads or changes settings.

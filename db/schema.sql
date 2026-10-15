@@ -87,6 +87,14 @@ create table if not exists brand_events (
 );
 create index if not exists brand_events_brand_idx on brand_events(brand_id, created_at desc);
 
+-- Failed logins and signups, to slow down password guessing and spam
+create table if not exists login_attempts (
+  id  bigint generated always as identity primary key,
+  key text not null,
+  at  timestamptz not null default now()
+);
+create index if not exists login_attempts_key_idx on login_attempts(key, at);
+
 -- Only the website's server talks to the database (with the full connection
 -- string). Turning on row level security with no policies blocks Supabase's
 -- public API from reading these tables directly.
@@ -96,3 +104,4 @@ alter table brand_users  enable row level security;
 alter table shipments    enable row level security;
 alter table imports      enable row level security;
 alter table brand_events enable row level security;
+alter table login_attempts enable row level security;

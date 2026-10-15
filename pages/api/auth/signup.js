@@ -1,12 +1,14 @@
 // Self-serve signup: creates the brand (on a free trial) and its first login.
 import { api, str, email, Problem } from '../../../lib/api';
 import { tx, one } from '../../../lib/db';
-import { hashPassword, passwordProblem, startUserSession } from '../../../lib/auth';
+import { hashPassword, passwordProblem, startUserSession, clientIp, isBlocked, noteAttempt } from '../../../lib/auth';
 import { newCode } from '../../../lib/brands';
 
 export default api({
   async POST(req, res) {
     const b = req.body || {};
+    const sk = `signup:${clientIp(req)}`;
+    if (await isBlocked([[sk, 5]])) throw new Problem(429, 'Too many new accounts from this network. Try again later or message us on WhatsApp.');
     const brandName = str(b.brandName, 80);
     const name = str(b.name, 80);
     const mail = email(b.email);
@@ -30,6 +32,7 @@ export default api({
       );
       return u;
     });
+    await noteAttempt(sk);
     startUserSession(res, user.id);
     return { ok: true, code };
   },
