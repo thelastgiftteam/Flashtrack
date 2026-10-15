@@ -301,7 +301,7 @@ export default function ParcelView({ id, backHref, config, fetchTracking }) {
       </main>
 
       {toast && (
-        <div role="status" style={{ position: 'fixed', top: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 200, padding: '9px 16px', borderRadius: 999, background: C.ink, color: '#fff', fontSize: 13, fontWeight: 600, boxShadow: '0 10px 24px -8px rgba(20,33,61,.5)' }}>
+        <div role="status" style={{ position: 'fixed', top: 78, left: '50%', transform: 'translateX(-50%)', zIndex: 200, padding: '9px 16px', borderRadius: 999, background: C.ink, color: '#fff', fontSize: 13, fontWeight: 600, boxShadow: '0 10px 24px -8px rgba(0,0,0,.5)' }}>
           ✓ {toast}
         </div>
       )}
