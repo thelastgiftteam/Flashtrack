@@ -315,6 +315,13 @@ button,input,select,textarea{font:inherit;color:inherit;}
 .fc-card-head h2{font-size:16px;font-weight:700;}
 .fc-card-body{padding:16px 18px 18px;}
 .fc-stat{background:#fff;border:1px solid #E7E7EA;border-radius:14px;padding:16px 18px;min-width:0;}
+.fc-grid-5{grid-template-columns:repeat(5,minmax(0,1fr));}
+@media (max-width:1180px){.fc-grid-5{grid-template-columns:repeat(2,minmax(0,1fr));}.fc-grid-5>:last-child{grid-column:1/-1;}}
+.fc-saved{display:flex;align-items:center;gap:18px;background:#FEC200;color:#121212;border-radius:16px;padding:18px 22px;}
+.fc-saved-n{font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-style:italic;font-size:52px;line-height:1;letter-spacing:-0.03em;flex-shrink:0;}
+.fc-saved-t{font-weight:700;font-size:17px;line-height:1.3;}
+.fc-saved-h{font-size:14px;line-height:1.5;margin-top:4px;color:#3F2F00;}
+@media (max-width:640px){.fc-saved{gap:14px;padding:16px;}.fc-saved-n{font-size:40px;}.fc-saved-t{font-size:15px;}.fc-saved-h{font-size:13px;}}
 .fc-stat-label{font-size:13px;font-weight:600;color:#71717A;}
 .fc-stat-value{font-family:'Archivo',system-ui,sans-serif;font-weight:800;font-size:28px;margin-top:4px;line-height:1.1;}
 .fc-stat-hint{font-size:12.5px;color:#8E8E98;margin-top:4px;}

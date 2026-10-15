@@ -124,7 +124,7 @@ function IndiaPostSheet({ tid, copiedAtOpen, onClose, t }) {
   );
 }
 
-function OrderCard({ order, isNew, index, fallback, onFallback, t, embedded }) {
+function OrderCard({ order, isNew, index, fallback, onFallback, onTrack, t, embedded }) {
   const [copied, setCopied] = useState(false);
   const [flash, setFlash] = useState(false);
   const tid = order.trackingId || '';
@@ -141,7 +141,7 @@ function OrderCard({ order, isNew, index, fallback, onFallback, t, embedded }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
-  function pressed() { setFlash(true); setTimeout(() => setFlash(false), 460); }
+  function pressed() { setFlash(true); setTimeout(() => setFlash(false), 460); onTrack && onTrack(); }
 
   const btnStyle = {
     flexShrink: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 999,
@@ -291,7 +291,7 @@ function PoweredBy({ embedded }) {
 }
 
 export default function OrderListView({
-  brandName = 'Order Tracking', logo = '', orders = [], loading, error, refreshing, onRefresh,
+  brandName = 'Order Tracking', logo = '', orders = [], loading, error, refreshing, onRefresh, onTrack,
   bottomBar, showSearch = true, banner = null, syncTime,
   forceFallback = false, embedded = false, initialQuery = '',
 }) {
@@ -419,7 +419,7 @@ export default function OrderListView({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {g.items.map((o, i) => (
                 <OrderCard key={o.orderId || o.trackingId || `${gi}-${i}`} order={o} index={idx++} t={t} embedded={embedded}
-                  isNew={o.isNew && !s && gi === 0 && i === 0} fallback={fallback} onFallback={openSheet} />
+                  isNew={o.isNew && !s && gi === 0 && i === 0} fallback={fallback} onFallback={openSheet} onTrack={onTrack} />
               ))}
             </div>
           </section>

@@ -30,11 +30,12 @@ function Overview({ d, staff, reload }) {
   }
   return (
     <div className="fc-stack">
-      <div className="fc-grid fc-grid-4">
+      <div className="fc-grid fc-grid-5">
         <Stat label="Page" value={<AccessPill access={d.access} />} hint={d.access.live ? 'Customers can see it' : 'Customers see “paused”'} />
         <Stat label={d.access.label === 'Trial' ? 'Trial ends' : 'Paid until'} value={<span style={{ fontSize: 20 }}>{fmtDate(d.access.until)}</span>} hint={d.access.daysLeft >= 0 ? `${d.access.daysLeft} days left` : `${-d.access.daysLeft} days ago`} tone={d.access.daysLeft < 0 ? 'red' : undefined} />
         <Stat label="Shipments on file" value={d.stats.total} hint={`${d.stats.today} shipped today`} />
         <Stat label="Last upload" value={<span style={{ fontSize: 20 }}>{fmtWhen(d.imports[0]?.created_at)}</span>} hint={d.imports[0] ? `${d.imports[0].added} added` : ''} />
+        <Stat label="Customers who checked" value={d.usage.week_views} hint={`last 7 days · ${d.usage.week_tracks} Track taps`} />
       </div>
       <div className="fc-grid fc-grid-2">
         <Card title="Details">

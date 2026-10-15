@@ -95,6 +95,17 @@ create table if not exists login_attempts (
 );
 create index if not exists login_attempts_key_idx on login_attempts(key, at);
 
+-- How many customers used each brand's page, one row per brand per day.
+-- views: people who opened the page (each phone counted once a day)
+-- tracks: Track parcel taps
+create table if not exists page_stats (
+  brand_id uuid not null references brands(id) on delete cascade,
+  day      date not null,
+  views    int  not null default 0,
+  tracks   int  not null default 0,
+  primary key (brand_id, day)
+);
+
 -- Only the website's server talks to the database (with the full connection
 -- string). Turning on row level security with no policies blocks Supabase's
 -- public API from reading these tables directly.
@@ -105,3 +116,4 @@ alter table shipments    enable row level security;
 alter table imports      enable row level security;
 alter table brand_events enable row level security;
 alter table login_attempts enable row level security;
+alter table page_stats   enable row level security;

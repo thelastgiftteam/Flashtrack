@@ -50,6 +50,24 @@ function PausedPage({ brandName, link }) {
   );
 }
 
+// ─── Usage count (shown to the brand as "customers who checked") ──
+function hit(code, kind) {
+  try {
+    const body = JSON.stringify({ code, kind });
+    if (!(navigator.sendBeacon && navigator.sendBeacon('/api/hit', body))) {
+      fetch('/api/hit', { method: 'POST', body, keepalive: true }).catch(() => {});
+    }
+  } catch { /* never block the page */ }
+}
+
+// Each phone counts once a day, however many times it opens the page
+function countVisit(code) {
+  const day = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+  const key = `ft_seen_${code}`;
+  try { if (localStorage.getItem(key) === day) return; localStorage.setItem(key, day); } catch { /* private mode: count anyway */ }
+  hit(code, 'view');
+}
+
 // ─── Page ─────────────────────────────────────────────────────────
 export default function TrackingPage({ code, config, initial }) {
   const [orders,    setOrders]    = useState(initial?.orders || []);
@@ -82,6 +100,7 @@ export default function TrackingPage({ code, config, initial }) {
 
   useEffect(() => {
     if (config?.suspended) return;
+    countVisit(code);
     if (!initial) fetchOrders();
     const iv = setInterval(() => fetchOrders(false), BG_REFRESH_MS);
     return () => clearInterval(iv);
@@ -113,6 +132,7 @@ export default function TrackingPage({ code, config, initial }) {
       refreshing={refreshing}
       syncTime={syncTime}
       bottomBar={config?.bottomBar}
+      onTrack={() => hit(code, 'track')}
       showSearch={config?.showSearch !== false}
     />
   );
