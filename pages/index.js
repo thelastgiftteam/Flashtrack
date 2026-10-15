@@ -64,6 +64,15 @@ function WhatsAppButton({ children = 'Start free on WhatsApp', dark = false, cla
   );
 }
 
+function SignupButton({ children = 'Start free · 14 days', dark = false, className = '' }) {
+  return (
+    <a href="/signup"
+      className={`ft-btn inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-semibold ${dark ? 'bg-[#121212] text-white hover:bg-[#000000]' : 'bg-[#DF1515] text-white hover:bg-[#C4050A]'} ${className}`}>
+      {children}
+    </a>
+  );
+}
+
 function DemoButton({ className = '' }) {
   return (
     <a href="/demo"
@@ -162,10 +171,13 @@ function Nav() {
           <a href="#pricing" className="hover:text-[#DF1515]">Pricing</a>
           <a href="#faq" className="hover:text-[#DF1515]">FAQ</a>
         </nav>
-        <a href={WHATSAPP} target="_blank" rel="noreferrer"
-          className="ft-btn rounded-full bg-[#121212] px-4 py-2 text-[14px] font-semibold text-white hover:bg-[#000000] md:px-5">
-          Start free
-        </a>
+        <div className="flex items-center gap-4">
+          <a href="/login" className="text-[14px] font-semibold text-[#3F3F46] hover:text-[#DF1515]">Log in</a>
+          <a href="/signup"
+            className="ft-btn rounded-full bg-[#121212] px-4 py-2 text-[14px] font-semibold text-white hover:bg-[#000000] md:px-5">
+            Start free
+          </a>
+        </div>
       </Wrap>
     </header>
   );
@@ -187,7 +199,7 @@ function Hero() {
             their parcel is. No more “where is my order?” messages.
           </p>
           <div className="ft-h-in mt-8 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '.3s' }}>
-            <WhatsAppButton />
+            <SignupButton />
             <DemoButton />
           </div>
           <a href="#try" className="ft-h-in mt-4 inline-block text-[15px] font-semibold text-[#DF1515] underline decoration-2 underline-offset-4" style={{ animationDelay: '.34s' }}>
@@ -195,7 +207,7 @@ function Hero() {
           </a>
           <div className="ft-h-in mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] font-medium text-[#3F3F46]" style={{ animationDelay: '.38s' }}>
             <span>✓ ₹750 a month</span>
-            <span>✓ Ready in 24 hours</span>
+            <span>✓ 14 days free</span>
             <span>✓ No app needed</span>
           </div>
         </div>
@@ -429,8 +441,8 @@ function Problem() {
 }
 
 const STEPS = [
-  ['Send us your shipment list', 'Each day, download the list from your India Post account and send it to us.'],
-  ['We make your tracking page', 'Your page is ready in 24 hours, with your brand name and your WhatsApp button.'],
+  ['Sign up', 'Your tracking page is ready in 2 minutes, with your brand name and your WhatsApp button.'],
+  ['Add the day’s parcels', 'Upload India Post’s Excel file, take a photo of the receipt, or type them in. Takes a minute.'],
   ['Share the link', 'Add the link to your order message. Customers find their parcel by name, pincode or order number.'],
 ];
 
@@ -438,7 +450,7 @@ function HowItWorks() {
   return (
     <section id="how" className="bg-[#121212] text-white">
       <Wrap className="py-20 md:py-28">
-        <H2 className="max-w-[40rem]">Ready in one day. Nothing to install.</H2>
+        <H2 className="max-w-[40rem]">Ready in 2 minutes. Nothing to install.</H2>
         <ol className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
           <span className="ft-route absolute left-[22px] top-[22px] hidden h-0.5 w-[calc(100%-44px)] md:block" aria-hidden="true" />
           {STEPS.map(([t, d], i) => (
@@ -578,11 +590,11 @@ function Postcard() {
 const CONTENTS = [
   'Your own tracking page',
   'Unlimited orders',
-  'We update it every day',
+  'Add parcels by Excel, photo or typing',
   'Search by name, pincode or order number',
   '9 languages',
   'Your WhatsApp button on the page',
-  'Ready in 24 hours',
+  '14 days free, no card needed',
 ];
 
 function Pricing() {
@@ -592,10 +604,10 @@ function Pricing() {
         <div>
           <H2 className="text-[#121212]">One simple plan. Everything included.</H2>
           <p className="mt-5 max-w-[30rem] text-[17px] leading-[1.65] text-[#3F3F46]">
-            No setup fee. Message us on WhatsApp today and your page can be ready tomorrow.
+            No setup fee. Sign up and your page is ready in 2 minutes. Try it free for 14 days.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <WhatsAppButton />
+            <SignupButton />
             <DemoButton />
           </div>
         </div>
@@ -648,13 +660,13 @@ function Pricing() {
 
 const FAQS = [
   ['Do customers need an app or a login?', 'No. They open the link in any browser, type their name and tap Track parcel.'],
-  ['What do I need to do every day?', 'Send us the day’s shipment list from your India Post account. We add the new parcels to your page.'],
+  ['What do I need to do every day?', 'Add the day’s parcels: upload India Post’s Excel file, take a photo of the receipt, or type them in. It takes a minute.'],
   ['Which couriers do you support?', 'India Post Speed Post. Using another courier? Message us and we’ll tell you what’s possible.'],
   ['What customer details are shown on the page?', 'Only name, pincode and order number. No phone numbers. No addresses.'],
   ['Which languages does the page support?', 'English, Hindi, Bengali, Marathi, Gujarati, Tamil, Telugu, Kannada and Malayalam. The page picks the customer’s phone language, and they can change it at the top.'],
-  ['How long does setup take?', 'Your page is ready within 24 hours of sending your first shipment list.'],
+  ['How long does setup take?', 'About 2 minutes. Sign up, add your first parcels, and share the link.'],
   ['Can I put my own WhatsApp number on the page?', 'Yes. Every page has a button that opens a chat with you.'],
-  ['Can I see it before I pay?', 'Yes. The demo shows exactly what your customers will see.'],
+  ['Can I see it before I pay?', 'Yes. Every new account gets 14 days free, no card needed. You can also drop your India Post file on this page to see your own page first.'],
 ];
 
 function Faq() {
@@ -695,10 +707,10 @@ function FinalCta() {
           Give your customers one link to track every order.
         </h2>
         <p className="mt-5 max-w-[34rem] text-[18px] leading-[1.6] text-[#3B3000]">
-          ₹750 a month. Ready in 24 hours. Fewer “where is my order?” messages.
+          ₹750 a month. 14 days free. Fewer “where is my order?” messages.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <WhatsAppButton dark />
+          <SignupButton dark />
           <DemoButton className="bg-transparent" />
         </div>
       </Wrap>
