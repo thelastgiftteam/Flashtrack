@@ -24,7 +24,8 @@ export default api({
           where i.brand_id = $1 order by i.created_at desc limit 15`, [b.id]),
       q(`select e.kind, e.text, e.created_at, s.name as staff_name from brand_events e left join staff s on s.id = e.staff_id
           where e.brand_id = $1 order by e.created_at desc limit 40`, [b.id]),
-      q(`select count(*)::int as total, count(*) filter (where shipped_on = $2::date)::int as today
+      q(`select count(*)::int as total, count(*) filter (where shipped_on = $2::date)::int as today,
+              count(*) filter (where shipped_on >= $2::date - 30)::int as current, count(*) filter (where shipped_on < $2::date - 30)::int as past
            from shipments where brand_id = $1`, [b.id, today]),
     ]);
     const manager = b.manager_id ? await one('select id, name from staff where id = $1', [b.manager_id]) : null;

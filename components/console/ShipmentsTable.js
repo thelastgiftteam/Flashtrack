@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Empty, Loading, call, toast, fmtDate } from './ui';
 
 // Search, page through and delete shipments. Used by brands and the team.
-export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) {
+export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey, past = false }) {
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
@@ -41,12 +41,13 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) 
 
   return (
     <Card pad={false}>
+      {past && <div className="fc-alert is-info" style={{ margin: '14px 14px 0' }}>Shipped more than 30 days ago. Customers don’t see these any more. They’re deleted after 180 days.</div>}
       <div style={{ padding: 14, borderBottom: '1px solid #F1F1F3' }}>
         <input className="fc-input" placeholder="Search name, pincode, tracking number or order" value={q} onChange={e => { setQ(e.target.value); setPage(0); }} />
       </div>
       {err && <div className="fc-alert is-err" style={{ margin: 14 }}>⚠ {err}</div>}
       {!data && !err && <Loading />}
-      {data && data.rows.length === 0 && <Empty icon={q ? '🔍' : '📦'} title={q ? 'Nothing matches that search' : 'No shipments yet'}>{q ? 'Try a different name or number.' : 'Shipments you add show up here.'}</Empty>}
+      {data && data.rows.length === 0 && <Empty icon={q ? '🔍' : past ? '🗂' : '📦'} title={q ? 'Nothing matches that search' : past ? 'No past shipments yet' : 'No shipments in the last 30 days'}>{q ? 'Try a different name or number.' : past ? 'Shipments move here 30 days after they’re shipped. Customers no longer see them.' : 'Shipments you add show up here.'}</Empty>}
       {data && data.rows.length > 0 && (
         <div className="fc-table-wrap">
           <table className="fc-table fc-cards">

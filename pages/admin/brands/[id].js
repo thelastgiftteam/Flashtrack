@@ -276,7 +276,8 @@ export default function BrandPage() {
               <Tabs value={tab} onChange={setTab} tabs={[
                 { value: 'overview', label: 'Overview' },
                 { value: 'add', label: 'Add shipments' },
-                { value: 'shipments', label: 'Shipments', badge: d.stats.total },
+                { value: 'shipments', label: 'Shipments', badge: d.stats.current },
+                { value: 'past', label: 'Past shipments', badge: d.stats.past || null },
                 { value: 'page', label: 'Page' },
                 { value: 'billing', label: 'Renewal' },
                 ...(d.brand.plan === 'pro' ? [{ value: 'po', label: 'India Post login' }] : []),
@@ -286,6 +287,7 @@ export default function BrandPage() {
               {tab === 'overview' && <Overview d={d} staff={staff} reload={reload} />}
               {tab === 'add' && <ImportPanel addUrl={`/api/admin/brands/${d.brand.id}/shipments`} ocrUrl="/api/admin/ocr" pageUrl={`${SITE}/${d.brand.code}`} onDone={reload} />}
               {tab === 'shipments' && <ShipmentsTable url={`/api/admin/brands/${d.brand.id}/shipments`} deleteParam="sid" refreshKey={n} />}
+              {tab === 'past' && <ShipmentsTable url={`/api/admin/brands/${d.brand.id}/shipments?range=past`} deleteParam="sid" refreshKey={n} past />}
               {tab === 'page' && <div style={{ maxWidth: 680 }}><PageSettings brand={d.brand} saveUrl={`/api/admin/brands/${d.brand.id}`} onSaved={reload} /></div>}
               {tab === 'billing' && <Billing d={d} reload={reload} />}
               {tab === 'po' && <PostOfficeLogin d={d} reload={reload} />}
