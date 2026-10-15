@@ -12,6 +12,9 @@ function onOpen() {
     .createMenu('📦 EasyOrderTracking')
     .addItem('📥 Import shipments (India Post)', 'importShipments')
     .addSeparator()
+    .addItem('🟠 Speedposttrack down → use India Post', 'useIndiaPost')
+    .addItem('🟢 Back to Speedposttrack',              'useSpeedposttrack')
+    .addSeparator()
     .addItem('📢 Generate Report (WhatsApp)', 'generateReport')
     .addItem('💰 Generate Billing',           'generateBilling')
     .addItem('🔄 Update Website',             'updateWebsite')
@@ -99,6 +102,7 @@ function generateTrackingLink_(trackingId) {
   if (!trackingId) return '';
 
   var config    = kvRead_(ss_(), '_config');
+  if (isIndiaPostMode_(config)) return ''; // blank link = India Post copy/paste panel on the website
   var customUrl = String(config['tracking_base_url'] || '').trim();
 
   // ── Contingency plan: override URL ──
@@ -120,8 +124,9 @@ function generateTrackingLink_(trackingId) {
 // 2. Paste the whole India Post export (with its header row) into A1
 // 3. Menu → 📥 Import shipments
 // New tracking IDs are added to daily_tracking (name, pincode, booked
-// date, order ID, tracking link). Tracking IDs already in the sheet
-// only get their Delivery Status updated. Delivered is never undone.
+// date, order ID, tracking link). Tracking IDs already in the sheet are
+// skipped, so pasting the same file twice is harmless. No status is
+// imported: customers see the card and tap Track.
 // ─────────────────────────────────────────────────────────────────
 var FT_PASTE_TAB = 'paste_here';
 
@@ -148,7 +153,7 @@ function importShipments() {
   var lastCol = Math.max(track.getLastColumn(), 10);
   var headers = track.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h).trim(); });
   function ci(name) { return headers.indexOf(name); }
-  var need = ['Order ID', 'Customer Name', 'Pincode', 'Tracking ID', 'Shipped On', 'Delivery Status', 'Tracking Link'];
+  var need = ['Order ID', 'Customer Name', 'Pincode', 'Tracking ID', 'Shipped On', 'Tracking Link'];
   for (var n = 0; n < need.length; n++) {
     if (ci(need[n]) < 0) { ui.alert('daily_tracking is missing the "' + need[n] + '" column.'); return; }
   }
@@ -156,14 +161,11 @@ function importShipments() {
   // Existing tracking IDs → sheet row number
   var lastRow  = track.getLastRow();
   var existing = {};
-  var statusCol = ci('Delivery Status') + 1;
-  var oldStatus = [];
   if (lastRow >= 2) {
     var tids = track.getRange(2, ci('Tracking ID') + 1, lastRow - 1, 1).getValues();
-    oldStatus = track.getRange(2, statusCol, lastRow - 1, 1).getValues();
     for (var r = 0; r < tids.length; r++) {
       var t = String(tids[r][0] || '').trim().toUpperCase();
-      if (t) existing[t] = r; // index into oldStatus
+      if (t) existing[t] = true;
     }
   }
 
@@ -180,20 +182,13 @@ function importShipments() {
   var prefix  = String(config['brand_prefix'] || 'ORD').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3) || 'ORD';
   var today   = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'ddMMyyyy');
   var newRows = [];
-  var updated = 0, unchanged = 0, seen = {};
+  var already = 0, seen = {};
 
   parsed.rows.forEach(function(p) {
     if (seen[p.trackingId]) return;
     seen[p.trackingId] = true;
 
-    if (existing.hasOwnProperty(p.trackingId)) {
-      var idx = existing[p.trackingId];
-      var cur = String(oldStatus[idx][0] || '').trim();
-      if (/^delivered$/i.test(cur) || cur === p.status) { unchanged++; return; }
-      oldStatus[idx][0] = p.status;
-      updated++;
-      return;
-    }
+    if (existing[p.trackingId]) { already++; return; }
 
     var rowNum = dataEnd + newRows.length + 1;
     var row = [];
@@ -203,12 +198,10 @@ function importShipments() {
     row[ci('Pincode')]         = p.pincode;
     row[ci('Tracking ID')]     = p.trackingId;
     row[ci('Shipped On')]      = p.bookedOn || new Date();
-    row[ci('Delivery Status')] = p.status;
     row[ci('Tracking Link')]   = ftTrackingLink_(p.trackingId, config);
     newRows.push(row);
   });
 
-  if (updated) track.getRange(2, statusCol, oldStatus.length, 1).setValues(oldStatus);
   if (newRows.length) {
     var start = dataEnd + 1;
     track.getRange(start, 1, newRows.length, lastCol).setValues(newRows);
@@ -221,8 +214,7 @@ function importShipments() {
   ui.alert(
     '✅ Import done\n\n' +
     'New shipments added: ' + newRows.length + '\n' +
-    'Statuses updated: ' + updated + '\n' +
-    'Already up to date: ' + unchanged +
+    'Already in the sheet (skipped): ' + already +
     (parsed.skipped ? '\nSkipped (no tracking ID): ' + parsed.skipped : '') +
     '\n\nCustomers see the changes within about 5 minutes.'
   );
@@ -257,21 +249,10 @@ function ftParseExport_(values) {
       name:       ftTitleCase_(get(row, 'receiver-name')),
       pincode:    String(get(row, 'destination-pin') || '').replace(/\D/g, ''),
       bookedOn:   ftParseDate_(get(row, 'booking-date-time')),
-      status:     ftStatus_(get(row, 'event-description')),
     });
   }
   if (!rows.length) return { error: 'Found the header row but no shipments under it.' };
   return { rows: rows, skipped: skipped };
-}
-
-// India Post event text → the status customers see
-function ftStatus_(desc) {
-  var d = String(desc || '').toLowerCase();
-  if (/return|rts|sender/.test(d))                                return 'Returning to sender';
-  if (/deliver/.test(d) && !/not|fail|attempt|out for/.test(d)) return 'Delivered';
-  if (/out for deliver/.test(d))                                  return 'Out for delivery';
-  if (/not deliver|attempt|absent|refus|door locked|hold|held|retain|deposit/.test(d)) return 'Held at post office';
-  return 'Transit';
 }
 
 // "ABHIJITH N V" → "Abhijith N V", "SONU KK" → "Sonu KK"
@@ -294,11 +275,55 @@ function ftParseDate_(v) {
 
 // Same as generateTrackingLink_ but reuses the config already read
 function ftTrackingLink_(trackingId, config) {
+  if (isIndiaPostMode_(config)) return '';
   var customUrl = String(config['tracking_base_url'] || '').trim();
   if (customUrl && customUrl.indexOf('{id}') >= 0) return customUrl.replace('{id}', encodeURIComponent(trackingId));
   var id      = String(trackingId).trim().toLowerCase();
   var carrier = id.toUpperCase().endsWith('IN') ? 'speedpost' : 'dtdc';
   return 'https://speedposttrack.io/tracking-result?d=' + Utilities.base64Encode('{"t":"' + id + '","c":"' + carrier + '"}');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Contingency switch: if speedposttrack.io is down, use India Post.
+// India Post mode blanks every Tracking Link. On the website, a card
+// with no link opens the India Post panel (copy number → open India
+// Post → type captcha). Switching back rebuilds all the links.
+// Customers see the change within about a minute.
+// ─────────────────────────────────────────────────────────────────
+function isIndiaPostMode_(config) {
+  return String(config['tracking_mode'] || '').trim().toLowerCase() === 'indiapost';
+}
+
+function useIndiaPost()       { setTrackingMode_('indiapost'); }
+function useSpeedposttrack()  { setTrackingMode_('speedposttrack'); }
+
+function setTrackingMode_(mode) {
+  var ui     = SpreadsheetApp.getUi();
+  var config = kvRead_(ss_(), '_config');
+  config['tracking_mode'] = mode;
+  kvWrite_(ss_(), '_config', config);
+
+  var track = ss_().getSheetByName('daily_tracking');
+  var n = 0;
+  if (track && track.getLastRow() >= 2) {
+    var lastCol = track.getLastColumn();
+    var headers = track.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h).trim(); });
+    var tCol = headers.indexOf('Tracking ID'), lCol = headers.indexOf('Tracking Link');
+    if (tCol >= 0 && lCol >= 0) {
+      var rows  = track.getLastRow() - 1;
+      var tids  = track.getRange(2, tCol + 1, rows, 1).getValues();
+      var links = tids.map(function(r) {
+        var tid = String(r[0] || '').trim();
+        if (tid) n++;
+        return [tid ? ftTrackingLink_(tid, config) : ''];
+      });
+      track.getRange(2, lCol + 1, rows, 1).setValues(links);
+    }
+  }
+
+  ui.alert(mode === 'indiapost'
+    ? '🟠 India Post mode ON\n\n' + n + ' parcels now open the India Post panel (copy number → India Post site → captcha).\nNew parcels will too, until you switch back.\n\nLive on the website in about a minute.'
+    : '🟢 Back to Speedposttrack\n\n' + n + ' tracking links rebuilt.\n\nLive on the website in about a minute.');
 }
 
 // ─────────────────────────────────────────────────────────────────
