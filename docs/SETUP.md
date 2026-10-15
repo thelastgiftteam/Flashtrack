@@ -30,6 +30,7 @@ Vercel → project → Settings → Environment Variables. Add:
 | `ADMIN_PASSWORD` | a strong password, for the first admin login |
 | `NEXT_PUBLIC_SITE_URL` | `https://flashtrack.io` |
 | `GEMINI_API_KEY` | already set if `/ocr` works. Needed for photo uploads |
+| `NEXT_PUBLIC_PAY_LINK` | optional: your Razorpay Payment Page link. Brands see a “Pay now” button on their Plan page |
 
 Make random text on any computer: open a terminal and run `openssl rand -hex 32`.
 
@@ -59,6 +60,17 @@ Then Deployments → latest → **Redeploy**.
 - Shipments older than 60 days are deleted automatically. Pages show the last 30 days.
 - Pages turn off by themselves 3 days after the paid-until date (or the 14-day trial).
   Customers then see "this store's tracking page is paused".
+
+## Payments and renewals
+
+Payments are collected and recorded in Razorpay only. FlashTrack just keeps each
+brand's paid-until date:
+
+1. The 🔔 bell in the admin console lists, for each manager's brands: renewals in
+   the next 7 days, overdue payments, pages that turned off, trials ending, and
+   Pro uploads not done today. Admins see every brand.
+2. When a brand pays in Razorpay, open the brand → **Renewal** → tap **+1 month**
+   (or 3, 6, 12). The page stays on and the renewal is logged on the brand.
 
 ## Not needed any more
 
