@@ -92,18 +92,18 @@ export default function Brands() {
           {data && !data.brands.length && <Empty icon="▦" title="No brands match" action={<Button size="sm" onClick={() => setAdding(true)}>＋ Add brand</Button>} />}
           {data && data.brands.length > 0 && (
             <div className="fc-table-wrap">
-              <table className="fc-table">
+              <table className="fc-table fc-cards">
                 <thead><tr><th>Brand</th><th>Status</th><th>Plan</th><th>Paid until</th><th>Manager</th><th>Last upload</th><th>Shipments</th></tr></thead>
                 <tbody>
                   {data.brands.map(b => (
                     <tr key={b.id} className="is-click" onClick={() => router.push(`/admin/brands/${b.id}`)}>
-                      <td><div className="fc-strong">{b.name}</div><div className="fc-small fc-muted">/{b.code}{b.contact_phone ? ` · ${b.contact_phone}` : ''}</div></td>
-                      <td><AccessPill access={b.access} /></td>
-                      <td>{b.plan === 'pro' ? <Pill tone="yellow">Pro</Pill> : <Pill>Basic</Pill>}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(b.access.until)}</td>
-                      <td>{b.manager_name || <span className="fc-muted">—</span>}</td>
-                      <td className="fc-small" style={{ whiteSpace: 'nowrap' }}>{fmtWhen(b.last_import)}</td>
-                      <td>{b.shipments}</td>
+                      <td className="fc-cards-title"><div className="fc-strong">{b.name}</div><div className="fc-small fc-muted">/{b.code}{b.contact_phone ? ` · ${b.contact_phone}` : ''}</div></td>
+                      <td data-label="Status"><AccessPill access={b.access} /></td>
+                      <td data-label="Plan">{b.plan === 'pro' ? <Pill tone="yellow">Pro</Pill> : <Pill>Basic</Pill>}</td>
+                      <td data-label="Paid until" style={{ whiteSpace: 'nowrap' }}>{fmtDate(b.access.until)}</td>
+                      <td data-label="Manager">{b.manager_name || <span className="fc-muted">—</span>}</td>
+                      <td data-label="Last upload" className="fc-small" style={{ whiteSpace: 'nowrap' }}>{fmtWhen(b.last_import)}</td>
+                      <td data-label="Shipments">{b.shipments}</td>
                     </tr>
                   ))}
                 </tbody>

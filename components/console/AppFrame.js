@@ -13,6 +13,15 @@ const NAV = [
   { href: '/app/account', label: 'Account', icon: '◉' },
 ];
 
+// Bottom tabs on phones (Account stays in the side menu on bigger screens and on the Home page)
+const TABS = [
+  { href: '/app', label: 'Home', icon: '⌂' },
+  { href: '/app/shipments', label: 'Shipments', icon: '☰' },
+  { href: '/app/add', label: 'Add', icon: '＋', add: true },
+  { href: '/app/page', label: 'Page', icon: '◧' },
+  { href: '/app/plan', label: 'Plan', icon: '₹' },
+];
+
 // Brand dashboard frame: loads the brand once, shows plan warnings on every page.
 export default function AppFrame({ title, subtitle, actions, children }) {
   const router = useRouter();
@@ -31,7 +40,7 @@ export default function AppFrame({ title, subtitle, actions, children }) {
     banner = <div className="fc-banner fc-alert is-warn"><b>Your free trial ends {a.daysLeft === 0 ? 'today' : `in ${a.daysLeft} day${a.daysLeft > 1 ? 's' : ''}`}.</b> <a className="fc-link" href="/app/plan">Choose a plan</a> to keep your page on.</div>;
   }
   return (
-    <Shell kind="app" nav={NAV} title={title} subtitle={subtitle} actions={actions} banner={banner}
+    <Shell kind="app" nav={NAV} tabs={TABS} title={title} subtitle={subtitle} actions={actions} banner={banner}
       who={data ? { name: data.brand.name, sub: data.user.email } : null} onLogout={logout}>
       {error && <div className="fc-alert is-err">⚠ {error}</div>}
       {!data && !error && <Loading />}

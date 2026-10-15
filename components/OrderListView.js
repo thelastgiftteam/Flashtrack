@@ -344,7 +344,7 @@ export default function OrderListView({
 
       {banner}
 
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,.94)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: `1px solid ${C.line}` }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 100, background: '#fff', borderBottom: `1px solid ${C.line}` }}>
         <div className="ft-stripe" />
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>

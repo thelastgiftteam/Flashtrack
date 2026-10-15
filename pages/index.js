@@ -148,7 +148,7 @@ function LiveScreen({ query = '' }) {
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E4E4E7] bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[#E4E4E7] bg-white md:bg-white/90 md:backdrop-blur">
       <Wrap className="flex h-16 items-center justify-between gap-4">
         <a href="/" aria-label="FlashTrack home" className="ft-logo flex items-center gap-2">
           <img src="/brand/flashtrack-mark.png" alt="" width="46" height="31" className="ft-logo-mark block h-[31px] w-auto" />
@@ -205,7 +205,7 @@ function Hero() {
           </div>
           <Phone className="ft-rise relative z-10 mx-auto mt-4"><LiveScreen /></Phone>
           <Postmark className="ft-postmark-anim absolute -right-1 bottom-6 z-20 hidden w-[120px] sm:block text-[#DF1515] sm:-right-6 sm:w-[150px] md:-right-12 md:w-[170px] lg:-bottom-14" />
-          <p className="ft-hand mt-5 text-center text-[24px] text-[#DF1515] xl:hidden">this is the real page, try it</p>
+          <a href="/demo" className="ft-hand mt-5 block text-center text-[24px] text-[#DF1515] underline decoration-2 underline-offset-4 xl:hidden">tap here to try the real page</a>
         </div>
       </Wrap>
     </section>
@@ -617,7 +617,8 @@ function Footer() {
 const CSS = `
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-width:0;border-style:solid;border-color:#E4E4E7;}
 html{scroll-behavior:smooth;scroll-padding-top:72px;}
-body{background:#fff;color:#121212;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+html,body{overflow-x:clip;}
+body{background:#fff;color:#121212;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;}
 a{text-decoration:none;color:inherit;}
 ul,ol{list-style:none;}
 .ft-display{font-family:'Archivo',system-ui,sans-serif;font-weight:800;font-style:italic;font-stretch:112%;letter-spacing:-0.02em;}
@@ -687,6 +688,20 @@ a:focus-visible,summary:focus-visible{outline:3px solid #FEC200;outline-offset:3
 .ft-faq summary::-webkit-details-marker{display:none;}
 .ft-plus{transition:transform .2s;}
 .ft-faq[open] .ft-plus{transform:rotate(45deg);}
+
+/* Phones: the phone pictures are previews, so a thumb scrolls the page instead
+   of getting caught inside them; motion is a simple fade, nothing slides sideways */
+@media (hover:none),(max-width:767px){
+  .ft-embed{pointer-events:none;}
+  .ft-embed-scroll{overflow:hidden;}
+}
+@keyframes ftFadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@media (max-width:767px){
+  .ft-h-in,.ft-hint{animation-name:ftFadeUp;animation-duration:.45s;}
+  .ft-streaks polygon{animation-name:ftFade;}
+  .ft-rise{animation-duration:.5s;}
+}
+@keyframes ftFade{from{opacity:0;}to{opacity:1;}}
 
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto;}
