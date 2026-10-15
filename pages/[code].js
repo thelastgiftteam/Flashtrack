@@ -24,91 +24,6 @@ export async function getStaticProps({ params }) {
   }
 }
 
-// ─── Localization ─────────────────────────────────────────────────
-const LANGS = [
-  { code: 'en', label: 'EN', name: 'English' },
-  { code: 'ml', label: 'മല', name: 'Malayalam' },
-  { code: 'ta', label: 'த',  name: 'Tamil' },
-  { code: 'hi', label: 'हि', name: 'Hindi' },
-  { code: 'kn', label: 'ಕ',  name: 'Kannada' },
-  { code: 'te', label: 'తె', name: 'Telugu' },
-];
-
-const T = {
-  en: {
-    orderTracking:   'Order tracking',
-    tapToRefresh:    'Refresh',
-    updating:        'Updating…',
-    searchPlaceholder: 'Search name, pincode or order ID',
-    liveOrders:      'Live orders',
-    results:         n => `${n} result${n !== 1 ? 's' : ''}`,
-    noOrders:        'No active orders right now',
-    checkBackSoon:   'Check back soon',
-    noResultsFor:    q => `No results for "${q}"`,
-    tryDifferent:    'Try a different name or order ID',
-  },
-  ml: {
-    orderTracking:   'ഓർഡർ ട്രാക്കിംഗ്',
-    tapToRefresh:    'പുതുക്കാൻ ടാപ്പ് ചെയ്യുക',
-    updating:        'അപ്ഡേറ്റ് ചെയ്യുന്നു…',
-    searchPlaceholder: 'പേര് അല്ലെങ്കിൽ ഓർഡർ ID തിരയുക...',
-    liveOrders:      'തത്സമയ ഓർഡറുകൾ',
-    results:         n => `${n} ഫലം`,
-    noOrders:        'ഇപ്പോൾ സജീവ ഓർഡറുകൾ ഇല്ല',
-    checkBackSoon:   'പിന്നീട് വീണ്ടും നോക്കൂ',
-    noResultsFor:    q => `"${q}" ന് ഫലമൊന്നുമില്ല`,
-    tryDifferent:    'മറ്റൊരു പേര് അല്ലെങ്കിൽ ID ഉപയോഗിക്കുക',
-  },
-  ta: {
-    orderTracking:   'ஆர்டர் கண்காணிப்பு',
-    tapToRefresh:    'புதுப்பிக்க தட்டவும்',
-    updating:        'புதுப்பிக்கிறது…',
-    searchPlaceholder: 'பெயர் அல்லது ஆர்டர் ID தேடுக...',
-    liveOrders:      'நேரடி ஆர்டர்கள்',
-    results:         n => `${n} முடிவு`,
-    noOrders:        'இப்போது செயலில் உள்ள ஆர்டர்கள் இல்லை',
-    checkBackSoon:   'சற்று நேரம் கழித்து பாருங்கள்',
-    noResultsFor:    q => `"${q}" க்கு முடிவு இல்லை`,
-    tryDifferent:    'வேறு பெயர் அல்லது ID முயற்சிக்கவும்',
-  },
-  hi: {
-    orderTracking:   'ऑर्डर ट्रैकिंग',
-    tapToRefresh:    'रिफ्रेश करने के लिए टैप करें',
-    updating:        'अपडेट हो रहा है…',
-    searchPlaceholder: 'नाम या ऑर्डर ID खोजें...',
-    liveOrders:      'लाइव ऑर्डर',
-    results:         n => `${n} परिणाम`,
-    noOrders:        'अभी कोई सक्रिय ऑर्डर नहीं',
-    checkBackSoon:   'थोड़ी देर बाद देखें',
-    noResultsFor:    q => `"${q}" के लिए कोई परिणाम नहीं`,
-    tryDifferent:    'कोई अलग नाम या ID आज़माएं',
-  },
-  kn: {
-    orderTracking:   'ಆರ್ಡರ್ ಟ್ರ್ಯಾಕಿಂಗ್',
-    tapToRefresh:    'ರಿಫ್ರೆಶ್ ಮಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ',
-    updating:        'ನವೀಕರಿಸಲಾಗುತ್ತಿದೆ…',
-    searchPlaceholder: 'ಹೆಸರು ಅಥವಾ ಆರ್ಡರ್ ID ಹುಡುಕಿ...',
-    liveOrders:      'ನೇರ ಆರ್ಡರ್‌ಗಳು',
-    results:         n => `${n} ಫಲಿತಾಂಶ`,
-    noOrders:        'ಇದೀಗ ಸಕ್ರಿಯ ಆರ್ಡರ್‌ಗಳಿಲ್ಲ',
-    checkBackSoon:   'ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ನೋಡಿ',
-    noResultsFor:    q => `"${q}" ಗೆ ಫಲಿತಾಂಶಗಳಿಲ್ಲ`,
-    tryDifferent:    'ಬೇರೆ ಹೆಸರು ಅಥವಾ ID ಪ್ರಯತ್ನಿಸಿ',
-  },
-  te: {
-    orderTracking:   'ఆర్డర్ ట్రాకింగ్',
-    tapToRefresh:    'రిఫ్రెష్ చేయడానికి నొక్కండి',
-    updating:        'అప్‌డేట్ అవుతోంది…',
-    searchPlaceholder: 'పేరు లేదా ఆర్డర్ ID వెతకండి...',
-    liveOrders:      'లైవ్ ఆర్డర్లు',
-    results:         n => `${n} ఫలితాలు`,
-    noOrders:        'ప్రస్తుతం చురుకైన ఆర్డర్లు లేవు',
-    checkBackSoon:   'కొంత సేపటికి మళ్ళీ చూడండి',
-    noResultsFor:    q => `"${q}" కి ఫలితాలు లేవు`,
-    tryDifferent:    'వేరే పేరు లేదా ID ప్రయత్నించండి',
-  },
-};
-
 // ─── Suspended brand ──────────────────────────────────────────────
 function SuspendedPage({ brandName }) {
   return (
@@ -117,7 +32,7 @@ function SuspendedPage({ brandName }) {
         <div style={{ fontSize: 48, marginBottom: 14 }}>⏸️</div>
         <div className="ft-display" style={{ fontSize: 22, marginBottom: 14 }}>{brandName}</div>
         <div style={{ background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18, padding: '24px 22px' }}>
-          <div style={{ display: 'inline-block', background: '#FFF4D1', color: '#7A4A00', borderRadius: 999, padding: '4px 14px', fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Service paused</div>
+          <div style={{ display: 'inline-block', background: C.cream, color: '#7A4A00', borderRadius: 999, padding: '4px 14px', fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Service paused</div>
           <p style={{ color: C.ink, fontSize: 15, lineHeight: 1.65, marginBottom: 10 }}>
             Order tracking for this business is temporarily unavailable.
           </p>
@@ -137,18 +52,6 @@ export default function TrackingPage({ code, config }) {
   const [refreshing,setRefreshing]= useState(false);
   const [error,     setError]     = useState(null);
   const [syncTime,  setSyncTime]  = useState('');
-  const [lang,      setLang]      = useState('en');
-
-  // Persist language choice
-  useEffect(() => {
-    const saved = typeof localStorage !== 'undefined' && localStorage.getItem('eot_lang');
-    if (saved && T[saved]) setLang(saved);
-  }, []);
-  useEffect(() => {
-    if (typeof localStorage !== 'undefined') localStorage.setItem('eot_lang', lang);
-  }, [lang]);
-
-  const t = T[lang] || T.en;
 
   const fetchOrders = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);
@@ -160,7 +63,7 @@ export default function TrackingPage({ code, config }) {
       setSyncTime(new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
       setError(null);
     } catch (e) {
-      setError('Could not refresh. Check your connection.');
+      setError(true); // OrderListView shows the message in the customer's language
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -199,10 +102,6 @@ export default function TrackingPage({ code, config }) {
       syncTime={syncTime}
       bottomBar={config?.bottomBar}
       showSearch={config?.showSearch !== false}
-      t={t}
-      langs={LANGS}
-      lang={lang}
-      setLang={setLang}
     />
   );
 }

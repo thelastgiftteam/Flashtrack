@@ -16,7 +16,7 @@ export default function Home() {
     <div className="ft-page">
       <Head>
         <title>FlashTrack · Branded parcel tracking for India Post shipments</title>
-        <meta name="description" content="One branded tracking link for every order you ship with India Post. Customers find their parcel by name and track it in one tap." />
+        <meta name="description" content="One link where your customers track their India Post parcels. They type their name and tap Track. No app, no login." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#FFFFFF" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -66,7 +66,7 @@ function DemoButton({ className = '' }) {
   return (
     <a href="/demo"
       className={`ft-btn inline-flex items-center justify-center rounded-full border-2 border-[#121212] px-6 py-3 text-[15px] font-semibold text-[#121212] hover:bg-[#121212] hover:text-white ${className}`}>
-      Open the live demo
+      See the demo
     </a>
   );
 }
@@ -129,7 +129,7 @@ function Phone({ children, className = '' }) {
 // data, scaled down. What visitors see here is exactly what customers get.
 const DEMO_BAR = { mode: 'button', text: 'Questions? Chat with us on WhatsApp', link: WHATSAPP, active: true };
 
-function LiveScreen({ sheet = false }) {
+function LiveScreen({ query = '' }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => { setOrders(demoCards()); setLoading(false); }, []);
@@ -138,7 +138,7 @@ function LiveScreen({ sheet = false }) {
       <div className="ft-statusbar"><span>9:41</span><span aria-hidden="true">▂▄▆ ▮</span></div>
       <div className="ft-embed-scroll">
         <OrderListView embedded brandName="Your Brand" orders={orders} loading={loading}
-          bottomBar={DEMO_BAR} initialSheet={sheet ? 'DM100000002IN' : null} />
+          bottomBar={DEMO_BAR} initialQuery={query} />
       </div>
     </div>
   );
@@ -175,14 +175,14 @@ function Hero() {
       <Wrap className="grid items-center gap-14 pb-20 pt-12 md:pb-24 md:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         <div>
           <div className="ft-h-in inline-flex items-center gap-2 rounded-full bg-[#FFF3C4] px-3.5 py-1.5 text-[13px] font-semibold text-[#7A5600]" style={{ animationDelay: '.05s' }}>
-            <span className="h-2 w-2 rounded-full bg-[#DF1515]" /> For brands shipping with India Post
+            <span className="h-2 w-2 rounded-full bg-[#DF1515]" />For brands that ship with India Post
           </div>
           <h1 className="ft-display ft-h-in mt-6 text-[42px] leading-[1.0] text-[#121212] sm:text-[54px] lg:text-[66px]" style={{ animationDelay: '.12s' }}>
-            Parcel tracking that carries your brand.
+            One link where your customers track their parcels.
           </h1>
           <p className="ft-h-in mt-6 max-w-[34rem] text-[18px] leading-[1.6] text-[#3F3F46]" style={{ animationDelay: '.22s' }}>
-            One link for every order you ship. Customers find their parcel by name and track it
-            in one tap, so they stop messaging you “where is my order?”.
+            Send one link to all your customers. They type their name, tap Track, and see where
+            their parcel is. No more “where is my order?” messages.
           </p>
           <div className="ft-h-in mt-8 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '.3s' }}>
             <WhatsAppButton />
@@ -190,8 +190,8 @@ function Hero() {
           </div>
           <div className="ft-h-in mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] font-medium text-[#3F3F46]" style={{ animationDelay: '.38s' }}>
             <span>✓ ₹750 a month</span>
-            <span>✓ Live in 24 hours</span>
-            <span>✓ No app, no login for customers</span>
+            <span>✓ Ready in 24 hours</span>
+            <span>✓ No app needed</span>
           </div>
         </div>
 
@@ -200,12 +200,12 @@ function Hero() {
           <Streaks className="absolute -left-10 top-0 z-0 w-[78%] sm:-left-16" />
           <Streaks className="absolute -right-8 bottom-24 z-0 w-[48%] rotate-180 sm:-right-14 lg:bottom-16" late />
           <div className="ft-hand ft-hint absolute -right-24 top-2 z-20 hidden w-[170px] rotate-[5deg] text-[25px] leading-[1.05] text-[#DF1515] xl:block">
-            it’s the real page, tap Track parcel
+            this is the real page, try it
             <svg width="70" height="50" viewBox="0 0 70 50" className="mt-1 block" aria-hidden="true"><path d="M60 4C46 10 30 24 16 44m0 0 1-12m-1 12 11-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <Phone className="ft-rise relative z-10 mx-auto mt-4"><LiveScreen /></Phone>
           <Postmark className="ft-postmark-anim absolute -right-1 bottom-6 z-20 hidden w-[120px] sm:block text-[#DF1515] sm:-right-6 sm:w-[150px] md:-right-12 md:w-[170px] lg:-bottom-14" />
-          <p className="ft-hand mt-5 text-center text-[24px] text-[#DF1515] xl:hidden">it’s the real page, tap Track parcel</p>
+          <p className="ft-hand mt-5 text-center text-[24px] text-[#DF1515] xl:hidden">this is the real page, try it</p>
         </div>
       </Wrap>
     </section>
@@ -224,9 +224,9 @@ function Streaks({ className = '', late = false }) {
 }
 
 const FLOW = [
-  ['🔍', 'Search their name', 'No tracking number to dig out of chat.'],
-  ['⚡', 'Tap Track parcel', 'Opens the live tracking for that parcel.'],
-  ['📮', 'See every India Post scan', 'Booked, dispatched, out for delivery, delivered.'],
+  ['🔍', 'Type your name', 'Or your pincode, or tracking number.'],
+  ['⚡', 'Tap Track parcel', 'No long number to copy or remember.'],
+  ['📮', 'See where your parcel is', 'Every India Post update, from booking to delivery.'],
 ];
 
 function Journey() {
@@ -246,10 +246,6 @@ function Journey() {
             </li>
           ))}
         </ol>
-        <p className="mt-7 rounded-2xl border-2 border-dashed border-[#121212] bg-white px-5 py-4 text-[15px] leading-[1.55] text-[#121212]">
-          <b>Tracking site down?</b> Customers still get through. Their tracking number is copied for them
-          and India Post’s own site opens. They paste it, type the captcha, done.
-        </p>
       </Wrap>
     </section>
   );
@@ -270,14 +266,14 @@ function Problem() {
         <div>
           <H2 className="text-[#121212]">The same question, all day, on WhatsApp.</H2>
           <p className="mt-5 max-w-[32rem] text-[17px] leading-[1.65] text-[#3F3F46]">
-            After a customer pays, your brand goes quiet until the parcel arrives. So they ask.
-            Again and again.
+            Once a customer pays, they wait. They don’t know where their parcel is, so they
+            message you. Again and again.
           </p>
           <ul className="mt-8 space-y-6">
             {[
-              ['💬', 'Your team answers tracking questions instead of selling', 'Every “where is my order?” is a chat someone has to stop and answer.'],
-              ['🔢', 'Tracking numbers get lost in chat', 'Customers scroll for a 13-character number, give up, and message you instead.'],
-              ['🔗', 'Courier pages don’t look like you', 'A tracking number and a captcha page is the last thing your customer sees of your brand.'],
+              ['💬', 'Your team replies all day', 'Time that should go into selling goes into answering “where is my order?”.'],
+              ['🔢', 'Tracking numbers get lost', 'Customers can’t find the long number you sent them, so they ask you again.'],
+              ['🔗', 'Your brand disappears after the sale', 'Courier pages don’t show your name. Your page does.'],
             ].map(([icon, t, d]) => (
               <li key={t} className="flex gap-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF3C4] text-[20px]">{icon}</span>
@@ -321,16 +317,16 @@ function Problem() {
 }
 
 const STEPS = [
-  ['Send us your daily shipments', 'Download the day’s shipment file from your India Post account and send it over. No software to install.'],
-  ['We build your tracking page', 'Your page goes live within 24 hours, with your brand name and your WhatsApp button.'],
-  ['Share one link with everyone', 'Put the link in your order message. Customers find their parcel by name, pincode or order ID.'],
+  ['Send us your shipment list', 'Each day, download the list from your India Post account and send it to us.'],
+  ['We make your tracking page', 'Your page is ready in 24 hours, with your brand name and your WhatsApp button.'],
+  ['Share the link', 'Add the link to your order message. Customers find their parcel by name, pincode or order number.'],
 ];
 
 function HowItWorks() {
   return (
     <section id="how" className="bg-[#121212] text-white">
       <Wrap className="py-20 md:py-28">
-        <H2 className="max-w-[40rem]">Live in a day. Nothing for you to set up.</H2>
+        <H2 className="max-w-[40rem]">Ready in one day. Nothing to install.</H2>
         <ol className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
           <span className="ft-route absolute left-[22px] top-[22px] hidden h-0.5 w-[calc(100%-44px)] md:block" aria-hidden="true" />
           {STEPS.map(([t, d], i) => (
@@ -351,13 +347,13 @@ function HowItWorks() {
 }
 
 const FEATURES_L = [
-  ['Search by name', 'No need to remember a 13-character tracking number.'],
-  ['Every order, one link', 'One page lists all your shipped orders.'],
-  ['6 languages', 'English, Malayalam, Tamil, Hindi, Kannada, Telugu.'],
+  ['Search by name', 'No need to remember a long tracking number.'],
+  ['All orders, one link', 'One page for every order you ship.'],
+  ['9 languages', 'Hindi, Bengali, Marathi, Gujarati, Tamil, Telugu, Kannada, Malayalam and English.'],
 ];
 const FEATURES_R = [
-  ['One-tap tracking', 'Track parcel opens the live India Post scans for that order.'],
-  ['A backup when tracking sites fail', 'The number is copied and India Post’s site opens. Paste, captcha, done.'],
+  ['Track in one tap', 'Track parcel shows every India Post update for that order.'],
+  ['Copy in one tap', 'Tap the tracking number to copy it.'],
   ['Your WhatsApp button', 'Customers reach you, not a courier helpline.'],
 ];
 
@@ -377,7 +373,7 @@ function Tour() {
         <div className="max-w-[40rem]">
           <H2 className="text-[#121212]">What your customer sees when they tap the link.</H2>
           <p className="mt-5 text-[17px] leading-[1.65] text-[#3F3F46]">
-            A clean page in your brand’s name. Built for phones, because that’s where your customers open it.
+            A simple page with your brand’s name. Made for phones.
           </p>
         </div>
 
@@ -387,7 +383,7 @@ function Tour() {
           </div>
           <div className="order-1 flex justify-center gap-5 lg:order-2">
             <Phone className="hidden sm:block"><LiveScreen /></Phone>
-            <Phone className="sm:mt-12"><LiveScreen sheet /></Phone>
+            <Phone className="sm:mt-12"><LiveScreen query="Rahul" /></Phone>
           </div>
           <div className="order-3 grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
             {FEATURES_R.map(([t, d]) => <Feature key={t} t={t} d={d} />)}
@@ -406,20 +402,19 @@ const ROWS = [
   ['Your brand name on the page', false],
   ['One link for all your orders', false],
   ['Customers search by their name', false],
-  ['Tracking number copied for them', false],
-  ['Still works when tracking sites are down', false],
-  ['Your WhatsApp button for questions', false],
+  ['In 9 Indian languages', false],
+  ['Your WhatsApp button on the page', false],
 ];
 
 function Compare() {
   return (
     <section className="bg-white">
       <Wrap className="py-20 md:py-28">
-        <H2 className="max-w-[40rem] text-[#121212]">Third-party tracking sites vs your FlashTrack page.</H2>
+        <H2 className="max-w-[40rem] text-[#121212]">Other tracking sites vs your FlashTrack page.</H2>
         <div className="mt-12 overflow-hidden rounded-[24px] border border-[#E4E4E7]">
           <div className="grid grid-cols-[1fr_84px_84px] items-center bg-[#F4F4F5] px-5 py-4 text-[13px] font-bold text-[#3F3F46] sm:grid-cols-[1fr_160px_160px] sm:px-8 sm:text-[14px]">
             <span>Feature</span>
-            <span className="text-center">Tracking sites</span>
+            <span className="text-center">Other sites</span>
             <span className="text-center text-[#DF1515]">FlashTrack</span>
           </div>
           {ROWS.map(([r, them]) => (
@@ -442,8 +437,8 @@ function Postcard() {
         <div className="ft-postcard relative mx-auto grid max-w-[980px] overflow-hidden rounded-[6px] bg-white md:grid-cols-[1.4fr_1fr]">
           <div className="p-7 md:border-r md:border-dashed md:border-[#D4D4D8] md:p-12">
             <p className="ft-display text-[22px] leading-[1.3] text-[#121212] md:text-[26px]">
-              “We run a D2C brand ourselves and ship across India with India Post every day.
-              We were answering ‘where is my order?’ all day and losing parcels to returns.
+              “We run our own online brand and ship with India Post every day.
+              We were answering ‘where is my order?’ all day long.
               FlashTrack started as our own fix.”
             </p>
             <div className="ft-hand mt-6 text-[34px] leading-none text-[#DF1515]">Stebin</div>
@@ -457,7 +452,7 @@ function Postcard() {
             </Stamp>
             <Postmark className="absolute right-20 top-8 w-[150px] text-[#121212]/70" top="KOCHI" bottom="KERALA" mid="2026" />
             <div className="mt-10 space-y-4 text-[16px] text-[#121212] md:mt-16">
-              <div className="border-b border-[#D4D4D8] pb-2"><span className="text-[#8E8E98]">To </span>Every D2C founder</div>
+              <div className="border-b border-[#D4D4D8] pb-2"><span className="text-[#8E8E98]">To </span>Every online brand</div>
               <div className="border-b border-[#D4D4D8] pb-2">shipping with India Post</div>
               <div className="border-b border-[#D4D4D8] pb-2">Anywhere in India</div>
             </div>
@@ -469,14 +464,13 @@ function Postcard() {
 }
 
 const CONTENTS = [
-  'Branded tracking page for all your orders',
+  'Your own tracking page',
   'Unlimited orders',
-  'Daily updates by our team',
-  'Search by name, pincode or order ID',
-  'India Post backup if tracking sites go down',
-  '6 languages for your customers',
-  'Your WhatsApp button on every page',
-  'Setup within 24 hours',
+  'We update it every day',
+  'Search by name, pincode or order number',
+  '9 languages',
+  'Your WhatsApp button on the page',
+  'Ready in 24 hours',
 ];
 
 function Pricing() {
@@ -484,10 +478,9 @@ function Pricing() {
     <section id="pricing" className="bg-white">
       <Wrap className="grid items-center gap-12 py-20 md:py-28 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
         <div>
-          <H2 className="text-[#121212]">One plan. Less than a day of support calls.</H2>
+          <H2 className="text-[#121212]">One simple plan. Everything included.</H2>
           <p className="mt-5 max-w-[30rem] text-[17px] leading-[1.65] text-[#3F3F46]">
-            Everything included, no setup fee. Message us on WhatsApp and your tracking page
-            can be live tomorrow.
+            No setup fee. Message us on WhatsApp today and your page can be ready tomorrow.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <WhatsAppButton />
@@ -542,14 +535,14 @@ function Pricing() {
 }
 
 const FAQS = [
-  ['Do my customers need to log in or install an app?', 'No. They open your link in any browser, search their name, pincode or order ID, and tap Track parcel.'],
-  ['What do I need to do every day?', 'Send us the day’s shipment file from your India Post account. We add the new parcels to your page.'],
-  ['What happens if the tracking site is down?', 'Customers still get through. Tapping Track parcel copies their tracking number and opens India Post’s own website. They paste the number, type the captcha and see every scan.'],
-  ['Which couriers do you support?', 'India Post Speed Post. If you use another courier, message us and we’ll tell you what’s possible.'],
-  ['What customer details are shown on the page?', 'Only the customer’s name, pincode and order ID. No phone numbers and no addresses.'],
-  ['How long does setup take?', 'Your tracking page is ready within 24 hours of sending your first shipment file.'],
-  ['Can I put my own WhatsApp number on the page?', 'Yes. Every tracking page shows a button that opens a chat with your business.'],
-  ['Can I see it before I pay?', 'Yes. The live demo shows exactly what your customers will see.'],
+  ['Do customers need an app or a login?', 'No. They open the link in any browser, type their name and tap Track parcel.'],
+  ['What do I need to do every day?', 'Send us the day’s shipment list from your India Post account. We add the new parcels to your page.'],
+  ['Which couriers do you support?', 'India Post Speed Post. Using another courier? Message us and we’ll tell you what’s possible.'],
+  ['What customer details are shown on the page?', 'Only name, pincode and order number. No phone numbers. No addresses.'],
+  ['Which languages does the page support?', 'English, Hindi, Bengali, Marathi, Gujarati, Tamil, Telugu, Kannada and Malayalam. The page picks the customer’s phone language, and they can change it at the top.'],
+  ['How long does setup take?', 'Your page is ready within 24 hours of sending your first shipment list.'],
+  ['Can I put my own WhatsApp number on the page?', 'Yes. Every page has a button that opens a chat with you.'],
+  ['Can I see it before I pay?', 'Yes. The demo shows exactly what your customers will see.'],
 ];
 
 function Faq() {
@@ -557,7 +550,7 @@ function Faq() {
     <section id="faq" className="bg-[#F4F4F5]">
       <Wrap className="grid gap-10 py-20 md:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div>
-          <H2 className="text-[#121212]">Questions brands ask us.</H2>
+          <H2 className="text-[#121212]">Common questions.</H2>
           <p className="mt-5 max-w-[24rem] text-[17px] leading-[1.65] text-[#3F3F46]">
             Can’t find your answer? Ask us on WhatsApp. A real person replies.
           </p>
@@ -587,10 +580,10 @@ function FinalCta() {
       <Postmark className="absolute -right-10 -top-6 hidden w-[320px] text-[#121212]/15 md:block" />
       <Wrap className="relative py-20 md:py-24">
         <h2 className="ft-display max-w-[44rem] text-[36px] leading-[1.05] text-[#121212] md:text-[56px]">
-          Put your brand on every tracking page.
+          Give your customers one link to track every order.
         </h2>
         <p className="mt-5 max-w-[34rem] text-[18px] leading-[1.6] text-[#3B3000]">
-          ₹750 a month. Live within 24 hours. Your customers stop asking where their order is.
+          ₹750 a month. Ready in 24 hours. Fewer “where is my order?” messages.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <WhatsAppButton dark />
