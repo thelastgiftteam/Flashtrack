@@ -7,6 +7,8 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) 
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
+  const [editing, setEditing] = useState(null); // { id, trackingId, name, pincode, orderRef, shippedOn }
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     try { setData(await call(`${url}${url.includes('?') ? '&' : '?'}q=${encodeURIComponent(q)}&page=${page}`)); setErr(''); }
@@ -14,10 +16,25 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) 
   }, [url, q, page]);
   useEffect(() => { const t = setTimeout(load, q ? 250 : 0); return () => clearTimeout(t); }, [load, q, refreshKey]);
 
+  const qs = p => `${url}${url.includes('?') ? '&' : '?'}${deleteParam}=${p}`;
+  function startEdit(r) {
+    setEditing({ id: r.id, trackingId: r.tracking_id, name: r.customer_name, pincode: r.pincode, orderRef: r.order_ref, shippedOn: String(r.shipped_on).slice(0, 10) });
+  }
+  async function saveEdit() {
+    setSaving(true);
+    try {
+      const { row } = await call(qs(editing.id), { method: 'PATCH', body: editing });
+      setData(d => ({ ...d, rows: d.rows.map(x => (x.id === row.id ? row : x)) }));
+      setEditing(null); toast('Saved. The page is updated.');
+    } catch (e) { toast(e.message, 'err'); } finally { setSaving(false); }
+  }
+  const ed = k => e => setEditing(x => ({ ...x, [k]: e.target.value }));
+  const inp = { padding: '6px 8px', fontSize: 14 };
+
   async function del(row) {
     if (!window.confirm(`Remove ${row.tracking_id} (${row.customer_name || 'no name'}) from the page?`)) return;
     try {
-      await call(`${url}${url.includes('?') ? '&' : '?'}${deleteParam}=${row.id}`, { method: 'DELETE' });
+      await call(qs(row.id), { method: 'DELETE' });
       toast('Removed'); load();
     } catch (e) { toast(e.message, 'err'); }
   }
@@ -35,7 +52,20 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) 
           <table className="fc-table">
             <thead><tr><th>Shipped</th><th>Customer</th><th>Pincode</th><th>Tracking number</th><th>Order</th><th>Added by</th><th /></tr></thead>
             <tbody>
-              {data.rows.map(r => (
+              {data.rows.map(r => editing && editing.id === r.id ? (
+                <tr key={r.id} style={{ background: '#FFFCF0' }}>
+                  <td><input className="fc-input" type="date" style={{ ...inp, width: 150 }} value={editing.shippedOn} onChange={ed('shippedOn')} /></td>
+                  <td><input className="fc-input" style={{ ...inp, minWidth: 150 }} value={editing.name} onChange={ed('name')} autoFocus /></td>
+                  <td><input className="fc-input" style={{ ...inp, width: 90 }} inputMode="numeric" value={editing.pincode} onChange={ed('pincode')} /></td>
+                  <td><input className="fc-input fc-mono" style={{ ...inp, minWidth: 150 }} value={editing.trackingId} onChange={e => setEditing(x => ({ ...x, trackingId: e.target.value.toUpperCase() }))} /></td>
+                  <td><input className="fc-input" style={{ ...inp, minWidth: 100 }} value={editing.orderRef} onChange={ed('orderRef')} /></td>
+                  <td />
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <Button size="sm" busy={saving} onClick={saveEdit}>Save</Button>{' '}
+                    <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>Cancel</Button>
+                  </td>
+                </tr>
+              ) : (
                 <tr key={r.id}>
                   <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.shipped_on)}</td>
                   <td className="fc-strong">{r.customer_name || '—'}</td>
@@ -43,7 +73,10 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) 
                   <td className="fc-mono">{r.tracking_id}</td>
                   <td className="fc-muted">{r.order_ref || '—'}</td>
                   <td className="fc-muted fc-small">{{ excel: 'Excel', photo: 'Photo', manual: 'Typed' }[r.source] || r.source}</td>
-                  <td><Button variant="danger" size="sm" onClick={() => del(r)}>Remove</Button></td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <Button variant="ghost" size="sm" onClick={() => startEdit(r)} disabled={!!editing}>Edit</Button>{' '}
+                    <Button variant="danger" size="sm" onClick={() => del(r)} disabled={!!editing}>Remove</Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
