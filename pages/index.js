@@ -121,6 +121,9 @@ function Phone({ children, className = '' }) {
   );
 }
 
+// These mirror the live tracking pages (components/ParcelView.js and
+// components/OrderListView.js), scaled down to fit the phone frame.
+
 const TIMELINE = [
   ['Taken out for delivery', 'Kakkanad SO', 'Today, 9:42 AM', true],
   ['Item received at destination', 'Kakkanad SO', 'Today, 6:10 AM'],
@@ -130,88 +133,118 @@ const TIMELINE = [
 
 function ParcelScreen() {
   return (
-    <div className="flex h-full flex-col bg-[#0B0F19] text-white">
-      <div className="flex items-center justify-between border-b border-white/5 px-4 pb-3 pt-9">
+    <div className="flex h-full flex-col bg-[#F3F5F9] text-[#14213D]">
+      <div className="flex items-center justify-between border-b border-[#E3E7EF] bg-white px-4 pb-2.5 pt-9">
         <div>
-          <div className="text-[13px] font-extrabold tracking-tight">YOUR BRAND</div>
-          <div className="text-[10px] text-[#9CA3AF]">All orders</div>
+          <div className="ft-display text-[13px] leading-tight">Your Brand</div>
+          <div className="text-[9.5px] font-semibold text-[#D7262E]">← All orders</div>
         </div>
-        <div className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-semibold">Share</div>
+        <div className="rounded-full border-[1.5px] border-[#14213D] px-2.5 py-0.5 text-[9.5px] font-semibold">Share</div>
       </div>
-      <div className="mx-3 mt-3 rounded-2xl border border-[#F59E0B]/40 bg-gradient-to-br from-[#F59E0B]/20 to-transparent p-3.5">
-        <div className="text-[9px] font-semibold text-[#9CA3AF]">Status</div>
-        <div className="mt-0.5 text-[19px] font-extrabold text-[#F59E0B]">🛵 Out for delivery</div>
-        <div className="mt-1 text-[10.5px] text-[#D1D5DB]">Taken out for delivery, Kakkanad SO</div>
-        <div className="mt-3 flex items-center">
-          {[0, 1, 2, 3].map(i => (
-            <div key={i} className={`flex items-center ${i < 3 ? 'flex-1' : ''}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${i <= 2 ? 'bg-[#F59E0B]' : 'bg-white/15'}`} />
-              {i < 3 && <span className={`mx-1 h-0.5 flex-1 ${i < 2 ? 'bg-[#F59E0B]' : 'bg-white/15'}`} />}
+
+      <div className="mx-3 mr-4 mt-3 overflow-hidden rounded-lg border-2 border-[#14213D] bg-white shadow-[4px_4px_0_#FFC72C]">
+        <div className="flex items-center justify-between bg-[#D7262E] px-2.5 py-1.5 text-white">
+          <span className="ft-display text-[8.5px]">SPEED POST</span>
+          <span className="rounded border border-white/50 bg-white/15 px-1.5 py-px text-[8px] font-bold tracking-wide">EL695415965IN ⧉</span>
+        </div>
+        <div className="p-2.5">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF4D1] text-[15px]">🛵</span>
+            <div>
+              <div className="text-[8px] font-semibold text-[#8A93A6]">Current status</div>
+              <div className="ft-display text-[15px] leading-tight text-[#B45309]">Out for delivery</div>
             </div>
-          ))}
+          </div>
+          <div className="mt-1.5 text-[9.5px]">Taken out for delivery, Kakkanad SO</div>
+          <div className="mt-2.5 flex items-center">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className={`flex items-center ${i < 3 ? 'flex-1' : ''}`}>
+                <span className={`h-2 w-2 rounded-full border-[1.5px] ${i <= 2 ? 'border-[#B45309] bg-[#B45309]' : 'border-[#CBD2DE] bg-white'}`} />
+                {i < 3 && <span className={`mx-0.5 h-[2px] flex-1 rounded ${i < 2 ? 'bg-[#B45309]' : 'bg-[#E3E7EF]'}`} />}
+              </div>
+            ))}
+          </div>
+          <div className="mt-1 grid grid-cols-4 text-[7px] font-medium text-[#5A6480]">
+            <span>Booked</span><span className="text-center">In transit</span>
+            <span className="text-center font-bold text-[#14213D]">Out for delivery</span><span className="text-right text-[#8A93A6]">Delivered</span>
+          </div>
         </div>
       </div>
-      <div className="mx-3 mt-2.5 rounded-2xl border border-white/5 bg-[#0D1117] p-3.5">
-        <div className="text-[9px] font-semibold text-[#9CA3AF]">All updates</div>
-        <div className="mt-2.5 space-y-2.5">
+
+      <div className="mx-3 mt-2.5 rounded-xl border border-[#E3E7EF] bg-white p-2.5">
+        {[['From', 'Ernakulam HO', '#14213D'], ['To', 'Kakkanad SO', '#D7262E']].map(([l, v, c], i) => (
+          <div key={l} className="flex gap-2">
+            <div className="flex w-2 flex-col items-center">
+              <span className="mt-0.5 h-2 w-2 rounded-full" style={{ background: c }} />
+              {i === 0 && <span className="my-0.5 flex-1 border-l-[1.5px] border-dashed border-[#8A93A6]" />}
+            </div>
+            <div className={i === 0 ? 'pb-1.5' : ''}>
+              <div className="text-[7.5px] font-semibold text-[#8A93A6]">{l}</div>
+              <div className="text-[10px] font-bold">{v}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mx-3 mt-2.5 rounded-xl border border-[#E3E7EF] bg-white p-2.5">
+        <div className="ft-display text-[11px]">Journey</div>
+        <div className="mt-2 space-y-2">
           {TIMELINE.map(([e, o, t, first]) => (
-            <div key={e} className="flex gap-2.5">
-              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${first ? 'bg-[#F59E0B] ring-4 ring-[#F59E0B]/20' : 'bg-white/20'}`} />
+            <div key={e} className="flex gap-2">
+              <span className={`mt-0.5 shrink-0 rounded-full ${first ? 'h-2.5 w-2.5 bg-[#B45309] ring-[3px] ring-[#B45309]/20' : 'ml-[1px] h-2 w-2 bg-[#CBD2DE]'}`} />
               <div className="min-w-0">
-                <div className={`text-[11px] ${first ? 'font-bold' : 'font-semibold text-[#D1D5DB]'}`}>{e}</div>
-                <div className="text-[9.5px] text-[#9CA3AF]">{o}, {t}</div>
+                <div className={`text-[9.5px] ${first ? 'font-bold' : 'font-semibold text-[#2B3550]'}`}>{e}</div>
+                <div className="text-[8px] text-[#8A93A6]">{o}, {t}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
-      <div className="mx-3 mt-2.5 grid grid-cols-2 gap-2 rounded-2xl border border-white/5 bg-[#0D1117] p-3.5">
-        <div>
-          <div className="text-[9px] font-semibold text-[#9CA3AF]">From</div>
-          <div className="text-[11px] font-semibold">Ernakulam HO</div>
-        </div>
-        <div>
-          <div className="text-[9px] font-semibold text-[#9CA3AF]">To</div>
-          <div className="text-[11px] font-semibold">Kakkanad SO</div>
-        </div>
-      </div>
-      <div className="mx-3 mb-3 mt-auto rounded-xl border border-[#059669] bg-[#064E3B] py-2.5 text-center text-[10.5px] font-semibold text-[#10B981]">
-        💬 Questions? Chat with us on WhatsApp
+
+      <div className="mx-3 mb-3 mt-auto rounded-full bg-[#1FA855] py-2 text-center text-[9.5px] font-semibold text-white">
+        Questions? Chat with us on WhatsApp
       </div>
     </div>
   );
 }
 
 const ORDERS = [
-  ['Anjali Menon', '695010', 'Delivered', '#10B981'],
-  ['Rahul Krishnan', '682030', 'Out for delivery', '#F59E0B'],
-  ['Fathima Shirin', '680001', 'Held at post office', '#F59E0B'],
-  ['Karthik S', '641002', 'In transit', '#60A5FA'],
+  ['Anjali Menon', '695010', 'Delivered', '#16884F', '#E7F6EE', '#16884F'],
+  ['Rahul Krishnan', '682030', 'Out for delivery', '#B45309', '#FFF4D1', '#1D4ED8'],
+  ['Fathima Shirin', '680001', 'Held at post office', '#B45309', '#FFF4D1', '#D7262E'],
+  ['Karthik S', '641002', 'In transit', '#1D4ED8', '#E8EFFE', '#7C3AED'],
 ];
 
 function ListScreen() {
   return (
-    <div className="flex h-full flex-col bg-[#0B0F19] text-white">
-      <div className="border-b border-white/5 px-4 pb-3 pt-9">
-        <div className="text-[13px] font-extrabold tracking-tight">YOUR BRAND</div>
-        <div className="text-[10px] text-[#9CA3AF]">Order tracking</div>
+    <div className="flex h-full flex-col bg-[#F3F5F9] text-[#14213D]">
+      <div className="flex items-center justify-between border-b border-[#E3E7EF] bg-white px-4 pb-2.5 pt-9">
+        <div>
+          <div className="ft-display text-[13px] leading-tight">Your Brand</div>
+          <div className="flex items-center gap-1 text-[9px] text-[#5A6480]"><span className="h-1.5 w-1.5 rounded-full bg-[#16884F]" />Order tracking</div>
+        </div>
+        <div className="rounded-full bg-[#14213D] px-2.5 py-1 text-[9px] font-semibold text-white">↻ Refresh</div>
       </div>
-      <div className="mx-3 mt-3 rounded-xl bg-white px-3 py-2.5 text-[10.5px] text-[#9CA3AF]">🔍 Search by name, pincode or order ID</div>
-      <div className="mt-2.5 space-y-2 px-3">
-        {ORDERS.map(([n, p, s, c]) => (
-          <div key={n} className="rounded-xl border border-white/5 bg-[#111827] p-2.5">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2563EB] text-[10px] font-bold">
+      <div className="border-b border-[#EBB51F] bg-[#FFC72C] px-3 py-2.5">
+        <div className="rounded-lg border-[1.5px] border-[#14213D] bg-white px-2.5 py-1.5 text-[9px] text-[#8A93A6] shadow-[2px_2px_0_#14213D]">🔍 Search by name, pincode or order ID</div>
+      </div>
+      <div className="px-3 pt-2 text-[9px] font-bold text-[#5A6480]">Live orders (4)</div>
+      <div className="mt-1.5 space-y-2 px-3">
+        {ORDERS.map(([n, p, s, c, bg, av]) => (
+          <div key={n} className="rounded-xl border border-[#E3E7EF] bg-white p-2" style={{ borderLeft: `3px solid ${c}` }}>
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[8.5px] font-bold text-white" style={{ background: av }}>
                 {n.split(' ').map(w => w[0]).join('')}
               </span>
-              <div>
-                <div className="text-[11.5px] font-bold">{n}</div>
-                <div className="text-[9.5px] text-[#9CA3AF]">📍 {p}</div>
+              <div className="min-w-0 flex-1">
+                <div className="ft-display truncate text-[10.5px]">{n}</div>
+                <div className="text-[8px] text-[#5A6480]">📍 {p}</div>
               </div>
+              <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[7.5px] font-bold" style={{ color: c, background: bg }}>{s}</span>
             </div>
-            <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2">
-              <span className="text-[10px] font-bold" style={{ color: c }}>● {s}</span>
-              <span className="rounded-full border border-[#059669] bg-[#064E3B] px-2.5 py-0.5 text-[9.5px] font-semibold text-[#10B981]">Track</span>
+            <div className="mt-1.5 flex items-center justify-between border-t border-dashed border-[#E3E7EF] pt-1.5">
+              <span className="rounded-md border border-[#E3E7EF] bg-[#F3F5F9] px-1.5 py-0.5 text-[7.5px] font-bold">EL6954159{60 + n.length}IN</span>
+              <span className="rounded-full bg-[#D7262E] px-2 py-0.5 text-[8px] font-bold text-white">Track parcel</span>
             </div>
           </div>
         ))}
