@@ -150,9 +150,9 @@ function Nav() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#E4E4E7] bg-white/90 backdrop-blur">
       <Wrap className="flex h-16 items-center justify-between gap-4">
-        <a href="/" aria-label="FlashTrack home" className="ft-logo flex items-center gap-2 rounded-full bg-black py-1.5 pl-2.5 pr-4">
-          <img src="/brand/flashtrack-mark.png" alt="" width="40" height="27" className="ft-logo-mark block h-[27px] w-auto" />
-          <img src="/brand/flashtrack-wordmark.png" alt="FlashTrack" width="104" height="16" className="block h-[16px] w-auto" />
+        <a href="/" aria-label="FlashTrack home" className="ft-logo flex items-center gap-2">
+          <img src="/brand/flashtrack-mark.png" alt="" width="46" height="31" className="ft-logo-mark block h-[31px] w-auto" />
+          <img src="/brand/flashtrack-wordmark-dark.png" alt="FlashTrack" width="124" height="19" className="block h-[19px] w-auto" />
         </a>
         <nav className="hidden items-center gap-8 text-[15px] font-medium text-[#3F3F46] md:flex">
           <a href="#how" className="hover:text-[#DF1515]">How it works</a>
