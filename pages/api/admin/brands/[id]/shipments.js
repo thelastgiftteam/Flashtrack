@@ -9,5 +9,5 @@ export default api({
   async GET(req) { const b = await loadBrand(req.query.id); return listShipments(b.id, req.query); },
   async POST(req, res, { staff }) { const b = await loadBrand(req.query.id); return addShipments(res, b, req.body, { staffId: staff.id }); },
   async PATCH(req, res) { const b = await loadBrand(req.query.id); return updateShipment(res, b, req.query.sid, req.body); },
-  async DELETE(req, res) { const b = await loadBrand(req.query.id); return deleteShipment(res, b, req.query.sid); },
+  async DELETE(req, res) { const b = await loadBrand(req.query.id); return deleteShipment(res, b, req.query.sid, req.body?.ids); },
 }, { auth: 'staff' });

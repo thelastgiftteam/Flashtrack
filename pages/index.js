@@ -3,6 +3,7 @@ import Head from 'next/head';
 import OrderListView from '../components/OrderListView';
 import { demoCards } from '../lib/demoData';
 import { parseGrid, parseCsv, normalizeRows } from '../lib/shipmentParse';
+import { shrinkImage } from '../components/console/ui';
 
 // FlashTrack homepage. Bright, postal-themed. Colours come from the FlashTrack
 // logo (bolt yellow, flash red, black), which sit close to India Post's own.
@@ -238,6 +239,7 @@ const dayLabel = ymd => `${Number(ymd.slice(8, 10))} ${MON[Number(ymd.slice(5, 7
 function TryIt() {
   const [rows, setRows] = useState(null);
   const [brand, setBrand] = useState('');
+  const [logo, setLogo] = useState('');
   const [problem, setProblem] = useState('');
   const [over, setOver] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -264,8 +266,13 @@ function TryIt() {
     } finally { setBusy(false); }
   }
 
+  async function pickLogo(file) {
+    if (!file) return;
+    try { setLogo(await shrinkImage(file, 256, 'image/png')); } catch { setProblem('Could not open that image. Try a PNG or JPG.'); }
+  }
+
   function start() {
-    try { sessionStorage.setItem('ft_try', JSON.stringify({ brandName: brand.trim(), rows })); } catch { /* still sign up */ }
+    try { sessionStorage.setItem('ft_try', JSON.stringify({ brandName: brand.trim(), logo, rows })); } catch { /* still sign up */ }
     window.location.href = '/signup?try=1';
   }
 
@@ -307,6 +314,17 @@ function TryIt() {
                 <input value={brand} onChange={e => setBrand(e.target.value)} maxLength={80} placeholder="e.g. WT Frames"
                   className="mt-1.5 block w-full rounded-xl border-2 border-[#121212] bg-white px-4 py-3 text-[16px] outline-none focus:border-[#DF1515]" />
               </label>
+              <div className="mt-4">
+                <span className="text-[14px] font-semibold text-[#3F3F46]">Your logo <span className="font-normal text-[#5C5C66]">(optional)</span></span>
+                <div className="mt-1.5 flex items-center gap-3">
+                  {logo && <img src={logo} alt="Your logo" className="h-12 w-12 rounded-xl border border-[#E4E4E7] bg-white object-contain" />}
+                  <label className="ft-btn cursor-pointer rounded-full border-2 border-[#121212] bg-white px-4 py-2 text-[14px] font-semibold text-[#121212] hover:bg-[#121212] hover:text-white">
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e => { pickLogo(e.target.files[0]); e.target.value = ''; }} />
+                    {logo ? 'Change logo' : 'Add your logo'}
+                  </label>
+                  {logo && <button onClick={() => setLogo('')} className="text-[14px] font-semibold text-[#5C5C66] underline">Remove</button>}
+                </div>
+              </div>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <button onClick={start} className="ft-btn rounded-full bg-[#DF1515] px-6 py-3.5 text-[15px] font-semibold text-white hover:bg-[#C4050A]">
                   Make this my page · 14 days free
@@ -315,7 +333,7 @@ function TryIt() {
                   Try another file
                 </button>
               </div>
-              <p className="mt-4 text-[14px] text-[#5C5C66]">These {rows.length} parcels go live on your page as soon as you sign up. No card needed.</p>
+              <p className="mt-4 text-[14px] text-[#5C5C66]">After you sign up, we’ll ask before adding these {rows.length} parcels to your page. No card needed.</p>
             </>
           )}
         </div>
@@ -325,7 +343,7 @@ function TryIt() {
               <div className="ft-embed">
                 <div className="ft-statusbar"><span>9:41</span><span aria-hidden="true">▂▄▆ ▮</span></div>
                 <div className="ft-embed-scroll">
-                  <OrderListView embedded brandName={brand.trim() || 'Your Brand'} orders={orders} loading={false} bottomBar={DEMO_BAR} />
+                  <OrderListView embedded brandName={brand.trim() || 'Your Brand'} logo={logo} orders={orders} loading={false} bottomBar={DEMO_BAR} />
                 </div>
               </div>
             ) : <LiveScreen />}
