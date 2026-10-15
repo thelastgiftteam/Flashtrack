@@ -229,7 +229,6 @@ export function fmtWhen(d) {
   if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
   return fmtDate(d);
 }
-export const rupees = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 
 // Shrink an image file in the browser (photos are big; this keeps uploads fast)
 export function shrinkImage(file, max = 1600, type = 'image/jpeg', quality = 0.85) {
@@ -384,6 +383,23 @@ a:focus-visible,button:focus-visible{outline:3px solid #FEC200;outline-offset:2p
 .fc-tab:hover{color:#121212;}
 .fc-tab.is-active{color:#121212;border-bottom-color:#DF1515;}
 .fc-tab-badge{margin-left:6px;background:#EFEFF1;border-radius:999px;padding:1px 7px;font-size:11.5px;}
+
+/* Reminders bell */
+.fc-bell-wrap{position:relative;}
+.fc-bell{position:relative;width:40px;height:40px;border-radius:10px;border:1px solid #E4E4E7;background:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.fc-bell:hover{border-color:#A1A1AA;}
+.fc-bell-n{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#DF1515;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #F6F6F7;}
+.fc-bell-n.is-calm{background:#121212;}
+.fc-bell-panel{position:absolute;right:0;top:calc(100% + 8px);width:min(380px,calc(100vw - 32px));background:#fff;border:1px solid #E4E4E7;border-radius:14px;box-shadow:0 24px 50px -16px rgba(0,0,0,.35);z-index:90;overflow:hidden;animation:fcUp2 .15s ease;}
+.fc-bell-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #F1F1F3;}
+.fc-bell-list{max-height:min(60vh,460px);overflow-y:auto;}
+.fc-bell-item{display:flex;gap:10px;align-items:flex-start;padding:11px 16px;border-bottom:1px solid #F4F4F5;font-size:14px;}
+.fc-bell-item:hover{background:#FAFAFA;}
+.fc-bell-foot{padding:10px 16px;background:#FAFAFA;}
+.fc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:6px;background:#A1A1AA;}
+.fc-dot.is-red{background:#DF1515;}
+.fc-dot.is-amber{background:#E0AC00;}
+@media (max-width:640px){.fc-bell-panel{position:fixed;left:16px;right:16px;top:64px;width:auto;}}
 
 /* Alerts, empty, loading, toast, modal */
 .fc-alert{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;border:1px solid;}

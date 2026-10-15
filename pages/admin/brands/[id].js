@@ -5,7 +5,7 @@ import AdminFrame from '../../../components/console/AdminFrame';
 import ImportPanel from '../../../components/console/ImportPanel';
 import ShipmentsTable from '../../../components/console/ShipmentsTable';
 import PageSettings from '../../../components/console/PageSettings';
-import { Card, Stat, Button, Field, Modal, Tabs, Loading, Empty, AccessPill, Pill, call, toast, copy, fmtDate, fmtWhen, rupees } from '../../../components/console/ui';
+import { Card, Stat, Button, Field, Modal, Tabs, Loading, Empty, AccessPill, Pill, call, toast, copy, fmtDate, fmtWhen } from '../../../components/console/ui';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://flashtrack.io';
 const SOURCE = { excel: 'Excel', photo: 'Photo', manual: 'Typed' };
@@ -80,17 +80,13 @@ function Overview({ d, staff, reload }) {
 
 function Billing({ d, reload }) {
   const b = d.brand;
-  const [f, setF] = useState({ amount: '750', months: '1', method: 'upi', reference: '', paidOn: '' });
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(0);
   const [until, setUntil] = useState(b.paid_until || '');
-  const set = k => e => setF({ ...f, [k]: e.target.value });
-  async function record(e) {
-    e.preventDefault(); setBusy(true);
-    try {
-      const out = await call(`/api/admin/brands/${b.id}/payments`, { method: 'POST', body: f });
-      toast(`Payment saved. Paid until ${fmtDate(out.paidUntil)}`);
-      setF({ ...f, reference: '' }); reload();
-    } catch (e2) { toast(e2.message, 'err'); } finally { setBusy(false); }
+  async function extend(months) {
+    if (!window.confirm(`Payment received in Razorpay? This adds ${months} month${months > 1 ? 's' : ''} and keeps the page on.`)) return;
+    setBusy(months);
+    try { const out = await call(`/api/admin/brands/${b.id}/extend`, { method: 'POST', body: { months } }); toast(`Paid until ${fmtDate(out.paidUntil)}`); reload(); }
+    catch (e) { toast(e.message, 'err'); } finally { setBusy(0); }
   }
   async function pause(on) {
     const msg = on ? 'Pause this page now? Customers will see a “paused, renew your plan” message.' : 'Turn this page back on?';
@@ -102,47 +98,45 @@ function Billing({ d, reload }) {
     try { await call(`/api/admin/brands/${b.id}`, { method: 'PATCH', body: { paidUntil: until } }); toast('Date saved'); reload(); }
     catch (e) { toast(e.message, 'err'); }
   }
-  if (!d.canManage) return <div className="fc-alert is-info">Only an admin or this brand’s account manager can see billing.</div>;
+  if (!d.canManage) return <div className="fc-alert is-info">Only an admin or this brand’s account manager can change the plan dates.</div>;
+  const a = d.access;
+  const renewals = d.events.filter(e => e.kind === 'renewal' || e.kind === 'billing');
   return (
     <div className="fc-stack">
       <div className="fc-grid fc-grid-2">
-        <Card title="Record a payment">
-          <form className="fc-form" onSubmit={record}>
-            <div className="fc-grid fc-grid-2">
-              <Field label="Amount (₹)"><input className="fc-input" inputMode="numeric" required value={f.amount} onChange={set('amount')} /></Field>
-              <Field label="Months"><select className="fc-select" value={f.months} onChange={set('months')}>{[1, 2, 3, 6, 12].map(m => <option key={m} value={m}>{m}</option>)}</select></Field>
-              <Field label="Paid by"><select className="fc-select" value={f.method} onChange={set('method')}><option value="upi">UPI</option><option value="bank">Bank transfer</option><option value="cash">Cash</option><option value="razorpay">Razorpay</option></select></Field>
-              <Field label="Date"><input className="fc-input" type="date" value={f.paidOn} onChange={set('paidOn')} /></Field>
-            </div>
-            <Field label="Reference (optional)" hint="UPI ID, transaction number, anything to find it later."><input className="fc-input" value={f.reference} onChange={set('reference')} /></Field>
-            <div><Button type="submit" busy={busy}>Save payment</Button></div>
-            <p className="fc-hint">Adds the months to the paid-until date and turns the page on.</p>
-          </form>
+        <Card title="Payment received?">
+          <p style={{ lineHeight: 1.55 }}>
+            {a.label === 'Trial' || a.label === 'Trial ended' ? 'Trial ' + (a.live ? 'ends' : 'ended') : 'Paid until'} <b>{fmtDate(a.until)}</b>
+            {a.daysLeft >= 0 ? ` (${a.daysLeft} day${a.daysLeft === 1 ? '' : 's'} left).` : ` (${-a.daysLeft} day${a.daysLeft === -1 ? '' : 's'} ago).`}
+          </p>
+          <p className="fc-hint" style={{ marginTop: 6 }}>Check the payment in Razorpay, then add the months they paid for. Time is added from the later of today and the current date.</p>
+          <div className="fc-row" style={{ marginTop: 14 }}>
+            {[1, 3, 6, 12].map(m => <Button key={m} variant={m === 1 ? 'primary' : 'ghost'} busy={busy === m} onClick={() => extend(m)}>+{m} month{m > 1 ? 's' : ''}</Button>)}
+          </div>
+          <a className="fc-link fc-small" style={{ display: 'inline-block', marginTop: 14 }} href="https://dashboard.razorpay.com/" target="_blank" rel="noreferrer">Open Razorpay ↗</a>
         </Card>
         <div className="fc-stack">
           <Card title="Page on or off">
             <p style={{ lineHeight: 1.55 }}>{b.status === 'paused'
               ? 'This page is paused by hand. Customers see “paused, renew your plan”.'
-              : `Turns off by itself ${3} days after the paid-until date. Pause it now if you need to.`}</p>
+              : 'Turns off by itself 3 days after the paid-until date. Pause it now if you need to.'}</p>
             <div style={{ marginTop: 12 }}>{b.status === 'paused'
               ? <Button variant="dark" onClick={() => pause(false)}>Turn page on</Button>
               : <Button variant="danger" onClick={() => pause(true)}>Pause page now</Button>}</div>
           </Card>
-          <Card title="Change paid-until date">
+          <Card title="Set the date yourself">
             <div className="fc-row"><input className="fc-input" style={{ width: 'auto' }} type="date" value={until} onChange={e => setUntil(e.target.value)} /><Button variant="ghost" onClick={saveUntil}>Save</Button></div>
-            <p className="fc-hint" style={{ marginTop: 8 }}>For fixes and free extensions. Recording a payment does this for you.</p>
+            <p className="fc-hint" style={{ marginTop: 8 }}>For fixes or free extensions.</p>
           </Card>
         </div>
       </div>
-      <Card title="Payments" pad={false}>
-        {!d.payments.length ? <Empty icon="₹" title="No payments yet" /> : (
-          <div className="fc-table-wrap"><table className="fc-table">
-            <thead><tr><th>Date</th><th>Amount</th><th>Months</th><th>Paid by</th><th>Reference</th><th>Saved by</th></tr></thead>
-            <tbody>{d.payments.map(p => (
-              <tr key={p.id}><td>{fmtDate(p.paid_on)}</td><td className="fc-strong">{rupees(p.amount)}</td><td>{p.months}</td><td>{p.method}</td><td className="fc-muted">{p.reference || '—'}</td><td className="fc-muted">{p.staff_name || '—'}</td></tr>
-            ))}</tbody>
-          </table></div>
-        )}
+      <Card title="Renewal history">
+        {!renewals.length ? <Empty icon="🗓" title="No renewals yet" /> : renewals.map((e, i) => (
+          <div key={i} style={{ padding: '9px 0', borderTop: i ? '1px solid #F1F1F3' : 'none' }}>
+            <div style={{ fontSize: 14.5 }}>{e.text}</div>
+            <div className="fc-small fc-muted">{fmtWhen(e.created_at)}{e.staff_name ? ` · ${e.staff_name}` : ''}</div>
+          </div>
+        ))}
       </Card>
     </div>
   );
@@ -284,7 +278,7 @@ export default function BrandPage() {
                 { value: 'add', label: 'Add shipments' },
                 { value: 'shipments', label: 'Shipments', badge: d.stats.total },
                 { value: 'page', label: 'Page' },
-                { value: 'billing', label: 'Billing' },
+                { value: 'billing', label: 'Renewal' },
                 ...(d.brand.plan === 'pro' ? [{ value: 'po', label: 'India Post login' }] : []),
                 { value: 'activity', label: 'Activity' },
                 ...(staff.role === 'admin' ? [{ value: 'danger', label: 'Settings' }] : []),
