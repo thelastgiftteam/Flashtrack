@@ -131,7 +131,7 @@ export default function ParcelView({ id, backHref, config, fetchTracking }) {
     return (
       <>
         {head}
-        <style>{BASE_CSS}</style>
+        <style dangerouslySetInnerHTML={{ __html: BASE_CSS }} />
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', color: C.muted }}>
           Order tracking for this business is temporarily unavailable.
         </div>
@@ -142,7 +142,7 @@ export default function ParcelView({ id, backHref, config, fetchTracking }) {
   return (
     <>
       {head}
-      <style>{BASE_CSS + 'body{padding-bottom:110px;}'}</style>
+      <style dangerouslySetInnerHTML={{ __html: BASE_CSS + 'body{padding-bottom:110px;}' }} />
 
       {/* Header */}
       <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: `1px solid ${C.line}` }}>

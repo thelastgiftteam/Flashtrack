@@ -9,7 +9,7 @@ export default function Custom404() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href={FONT_HREF} rel="stylesheet" />
       </Head>
-      <style>{BASE_CSS + 'body{background:#fff;}'}</style>
+      <style dangerouslySetInnerHTML={{ __html: BASE_CSS + 'body{background:#fff;}' }} />
       <div className="ft-stripe" />
       <div style={{ minHeight: 'calc(100vh - 5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
         <div style={{ maxWidth: 340 }}>

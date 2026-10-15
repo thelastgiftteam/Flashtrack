@@ -2,3 +2,6 @@ proxy/brands.json
 node_modules/
 .next/
 proxy/events/
+
+.env*.local
+.env
