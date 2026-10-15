@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import BrandBar from './BrandBar';
-import { C, FONT_HREF, BASE_CSS, statusOf, statusStyle } from '../lib/ftTheme';
+import { C, FONT_HREF, BASE_CSS } from '../lib/ftTheme';
 
 // Shared UI for a brand's order list. Used by /[code] (live orders from the
 // brand's sheet) and /demo (sample data). Data loading stays in the pages.
@@ -86,8 +86,6 @@ function IndiaPostSheet({ tid, onClose }) {
 
 function OrderCard({ order, isNew, fallback, onFallback }) {
   const [copied, setCopied] = useState(false);
-  const status = statusOf(order.status);
-  const st = statusStyle(order.status);
   const tid = order.trackingId || '';
   const link = order.trackingLink;
 
@@ -97,7 +95,7 @@ function OrderCard({ order, isNew, fallback, onFallback }) {
   }
 
   return (
-    <article style={{ position: 'relative', background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px 16px 14px', borderLeft: `5px solid ${st.color}` }}>
+    <article style={{ position: 'relative', background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px 16px 14px', borderLeft: `5px solid ${C.red}` }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ width: 44, height: 44, borderRadius: '50%', background: avatarColor(order.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
           {initials(order.name)}
@@ -112,9 +110,6 @@ function OrderCard({ order, isNew, fallback, onFallback }) {
             {order.pincode && <span>📍 {order.pincode}</span>}
           </div>
         </div>
-        <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: st.color, background: st.bg, borderRadius: 999, padding: '5px 10px', whiteSpace: 'nowrap' }}>
-          {status}
-        </span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 14, paddingTop: 12, borderTop: `1px dashed ${C.line}` }}>
