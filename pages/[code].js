@@ -111,7 +111,6 @@ export default function TrackingPage({ code, config, initial }) {
       loading={loading}
       error={error}
       refreshing={refreshing}
-      onRefresh={() => fetchOrders(true)}
       syncTime={syncTime}
       bottomBar={config?.bottomBar}
       showSearch={config?.showSearch !== false}

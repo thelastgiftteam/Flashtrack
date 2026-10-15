@@ -67,7 +67,7 @@ sheets, their Apps Scripts, and the `HQ_ENDPOINT`, `CSM_*`, `REVALIDATE_SECRET`,
 - `flashtrack.io/app`: brand dashboard (home, add shipments, shipments, page, plan, account).
 - `flashtrack.io/admin`: team console (today, brands, payments, team).
 - The customer page is cached and refreshed the moment a brand uploads or changes settings.
-- Shipments older than 60 days are deleted automatically. Pages show the last 30 days.
+- Customer pages show the last 30 days. Older shipments move to **Past shipments** (admin and brand dashboard), are never sent to customers, and are deleted after 180 days. Change `SHOW_DAYS` / `KEEP_DAYS` in `lib/brands.js`.
 - Pages turn off by themselves 3 days after the paid-until date (or the 14-day trial).
   Customers then see "this store's tracking page is paused".
 

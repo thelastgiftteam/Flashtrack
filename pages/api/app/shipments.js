@@ -1,7 +1,7 @@
 // Brand's own shipments: list/search, add (upload, photo, typed), delete.
 import { api, str, Problem } from '../../../lib/api';
 import { q, one } from '../../../lib/db';
-import { saveShipments, refreshPage, todayIST } from '../../../lib/brands';
+import { saveShipments, refreshPage, todayIST, addDays, SHOW_DAYS } from '../../../lib/brands';
 import { cleanTracking, validTracking, titleCase } from '../../../lib/shipmentParse';
 
 export const config = { api: { bodyParser: { sizeLimit: '4mb' } } };
@@ -14,9 +14,12 @@ export async function listShipments(brandId, query) {
     ? `and (lower(customer_name) like $2 or tracking_id ilike $2 or pincode like $2 or lower(order_ref) like $2)`
     : '';
   const params = s ? [brandId, `%${s}%`] : [brandId];
+  // "current" = on the customer page (last SHOW_DAYS days); "past" = older
+  const since = addDays(todayIST(), -SHOW_DAYS);
+  const range = query.range === 'past' ? `and shipped_on < '${since}'::date` : query.range === 'all' ? '' : `and shipped_on >= '${since}'::date`;
   const rows = await q(
     `select id, tracking_id, customer_name, pincode, order_ref, shipped_on, source, created_at
-       from shipments where brand_id = $1 ${where}
+       from shipments where brand_id = $1 ${range} ${where}
       order by shipped_on desc, id desc limit ${per + 1} offset ${page * per}`, params);
   return { rows: rows.slice(0, per), more: rows.length > per, page };
 }
