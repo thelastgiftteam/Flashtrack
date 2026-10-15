@@ -113,9 +113,9 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
     <div className="fc-stack">
       <Card>
         <Tabs value={mode} onChange={m => { setMode(m); reset(); }} tabs={[
-          { value: 'excel', label: '📄 Excel file' },
-          { value: 'photo', label: '📷 Photo of receipt' },
-          { value: 'type', label: '⌨️ Type or paste' },
+          { value: 'excel', label: '📄 Excel' },
+          { value: 'photo', label: '📷 Photo' },
+          { value: 'type', label: '⌨️ Type' },
         ]} />
 
         {mode === 'excel' && !rows && (
@@ -173,7 +173,7 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
             </div>
           )}
           <div className="fc-table-wrap" style={{ marginTop: 10, maxHeight: 460, overflowY: 'auto' }}>
-            <table className="fc-table">
+            <table className="fc-table fc-cards">
               <thead><tr><th>Tracking number</th><th>Customer name</th><th>Pincode</th><th>Order</th><th>Shipped</th><th /></tr></thead>
               <tbody>
                 {rows.map((r, i) => {
@@ -181,12 +181,12 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
                   const dup = existing.has(String(r.trackingId).replace(/\s+/g, '').toUpperCase());
                   return (
                     <tr key={i} style={dup ? { opacity: 0.45 } : undefined} title={dup ? 'Already on the page' : undefined}>
-                      <td><input className="fc-input fc-mono" style={{ padding: '6px 8px', minWidth: 150, borderColor: bad ? '#DF1515' : undefined }} value={r.trackingId} onChange={e => edit(i, 'trackingId', e.target.value.toUpperCase())} /></td>
-                      <td><input className="fc-input" style={{ padding: '6px 8px', minWidth: 150 }} value={r.name} onChange={e => edit(i, 'name', e.target.value)} /></td>
-                      <td><input className="fc-input" style={{ padding: '6px 8px', width: 90 }} inputMode="numeric" value={r.pincode} onChange={e => edit(i, 'pincode', e.target.value)} /></td>
-                      <td className="fc-small fc-muted">{dup ? <span className="fc-pill is-grey">Already on page</span> : (r.orderRef || '—')}</td>
-                      <td className="fc-small fc-muted" style={{ whiteSpace: 'nowrap' }}>{r.shippedOn || 'Today'}</td>
-                      <td><button className="fc-x" aria-label="Remove" onClick={() => remove(i)}>✕</button></td>
+                      <td data-label="Tracking no."><input className="fc-input fc-mono" style={{ padding: '6px 8px', minWidth: 150, borderColor: bad ? '#DF1515' : undefined }} value={r.trackingId} onChange={e => edit(i, 'trackingId', e.target.value.toUpperCase())} /></td>
+                      <td data-label="Customer"><input className="fc-input" style={{ padding: '6px 8px', minWidth: 150 }} value={r.name} onChange={e => edit(i, 'name', e.target.value)} /></td>
+                      <td data-label="Pincode"><input className="fc-input" style={{ padding: '6px 8px', width: 90 }} inputMode="numeric" value={r.pincode} onChange={e => edit(i, 'pincode', e.target.value)} /></td>
+                      <td data-label="Order" className="fc-small fc-muted">{dup ? <span className="fc-pill is-grey">Already on page</span> : (r.orderRef || '—')}</td>
+                      <td data-label="Shipped" className="fc-small fc-muted" style={{ whiteSpace: 'nowrap' }}>{r.shippedOn || 'Today'}</td>
+                      <td className="fc-cards-x"><button className="fc-x" aria-label="Remove" onClick={() => remove(i)}>✕</button></td>
                     </tr>
                   );
                 })}

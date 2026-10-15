@@ -51,13 +51,13 @@ function Toasts() {
   return <div key={t.id} className={`fc-toast ${t.tone === 'err' ? 'is-err' : ''}`} role="status">{t.tone === 'err' ? '⚠ ' : '✓ '}{t.msg}</div>;
 }
 
-export function Shell({ kind, nav, title, subtitle, actions, children, who, onLogout, banner }) {
+export function Shell({ kind, nav, title, subtitle, actions, children, who, onLogout, banner, tabs }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const here = router.asPath.split('?')[0];
   const isActive = href => (href === `/${kind}` ? here === href : here === href || here.startsWith(href + '/'));
   return (
-    <div className="fc">
+    <div className={`fc ${tabs ? 'has-tabs' : ''}`}>
       <Head>
         <title>{`${title} · FlashTrack`}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -98,6 +98,15 @@ export function Shell({ kind, nav, title, subtitle, actions, children, who, onLo
         {banner}
         <main className="fc-content">{children}</main>
       </div>
+      {tabs && (
+        <nav className="fc-bottom" aria-label="Main">
+          {tabs.map(t => (
+            <Link key={t.href} href={t.href} className={`${isActive(t.href) ? 'is-active' : ''} ${t.add ? 'is-add' : ''}`}>
+              <span aria-hidden="true">{t.icon}</span><span>{t.label}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
       <Toasts />
     </div>
   );
@@ -252,7 +261,8 @@ export function shrinkImage(file, max = 1600, type = 'image/jpeg', quality = 0.8
 
 const CSS = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{background:#F6F6F7;color:#121212;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;}
+html,body{overflow-x:clip;}
+body{background:#F6F6F7;color:#121212;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:15px;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;}
 a{color:inherit;text-decoration:none;}
 button,input,select,textarea{font:inherit;color:inherit;}
 .fc{display:flex;min-height:100vh;}
@@ -400,6 +410,43 @@ a:focus-visible,button:focus-visible{outline:3px solid #FEC200;outline-offset:2p
 .fc-dot.is-red{background:#DF1515;}
 .fc-dot.is-amber{background:#E0AC00;}
 @media (max-width:640px){.fc-bell-panel{position:fixed;left:16px;right:16px;top:64px;width:auto;}}
+
+/* Phones */
+@media (max-width:900px){
+  /* iPhones zoom into any box with text under 16px; keep them at 16 */
+  .fc-input,.fc-select,.fc-textarea{font-size:16px;}
+  .fc-top{background:#F6F6F7;backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .fc-btn{min-height:42px;}
+  .fc-btn-sm{min-height:36px;}
+  /* Brand dashboard: tabs at the bottom like an app */
+  .fc.has-tabs .fc-content{padding-bottom:96px;}
+  .fc-bottom{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;background:#fff;border-top:1px solid #E4E4E7;padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+  .fc-bottom a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;font-size:11.5px;font-weight:700;color:#71717A;min-width:0;}
+  .fc-bottom a span:first-child{font-size:18px;line-height:1.1;}
+  .fc-bottom a.is-active{color:#121212;}
+  .fc-bottom a.is-active span:first-child{color:#DF1515;}
+  .fc-bottom a.is-add span:first-child{background:#DF1515;color:#fff;border-radius:10px;width:34px;height:26px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .fc-toast{bottom:calc(84px + env(safe-area-inset-bottom));}
+}
+@media (min-width:901px){.fc-bottom{display:none;}}
+/* Tables turn into stacked cards on phones (labels from data-label) */
+@media (max-width:640px){
+  .fc-cards thead{display:none;}
+  .fc-cards,.fc-cards tbody{display:block;}
+  .fc-cards tr{display:flex;flex-wrap:wrap;gap:6px 14px;padding:14px 16px;border-bottom:1px solid #F1F1F3;position:relative;}
+  .fc-cards td{display:block;padding:0;border:none;min-width:0;}
+  .fc-cards td[data-label]::before{content:attr(data-label);display:block;font-size:11.5px;font-weight:700;color:#8E8E98;margin-bottom:2px;}
+  .fc-cards td.fc-cards-title{flex-basis:100%;font-size:16px;order:-1;}
+  .fc-cards td.fc-cards-title::before{display:none;}
+  .fc-cards td.fc-cards-actions{flex-basis:100%;display:flex;gap:8px;margin-top:4px;}
+  .fc-cards td.fc-cards-actions .fc-btn{flex:1;}
+  .fc-cards td.fc-cards-hide{display:none;}
+  .fc-cards td.fc-cards-x{position:absolute;top:10px;right:10px;}
+  .fc-cards td .fc-input{width:100%!important;min-width:0!important;}
+  .fc-cards tr:has(input) td[data-label]{flex-basis:calc(50% - 7px);}
+  .fc-cards tr:has(input) td[data-label="Customer"],.fc-cards tr:has(input) td[data-label="Tracking no."]{flex-basis:100%;}
+  .fc-table-wrap{overflow-x:visible;}
+}
 
 /* Alerts, empty, loading, toast, modal */
 .fc-alert{border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;border:1px solid;}

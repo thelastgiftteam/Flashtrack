@@ -49,31 +49,31 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey }) 
       {data && data.rows.length === 0 && <Empty icon={q ? '🔍' : '📦'} title={q ? 'Nothing matches that search' : 'No shipments yet'}>{q ? 'Try a different name or number.' : 'Shipments you add show up here.'}</Empty>}
       {data && data.rows.length > 0 && (
         <div className="fc-table-wrap">
-          <table className="fc-table">
+          <table className="fc-table fc-cards">
             <thead><tr><th>Shipped</th><th>Customer</th><th>Pincode</th><th>Tracking number</th><th>Order</th><th>Added by</th><th /></tr></thead>
             <tbody>
               {data.rows.map(r => editing && editing.id === r.id ? (
                 <tr key={r.id} style={{ background: '#FFFCF0' }}>
-                  <td><input className="fc-input" type="date" style={{ ...inp, width: 150 }} value={editing.shippedOn} onChange={ed('shippedOn')} /></td>
-                  <td><input className="fc-input" style={{ ...inp, minWidth: 150 }} value={editing.name} onChange={ed('name')} autoFocus /></td>
-                  <td><input className="fc-input" style={{ ...inp, width: 90 }} inputMode="numeric" value={editing.pincode} onChange={ed('pincode')} /></td>
-                  <td><input className="fc-input fc-mono" style={{ ...inp, minWidth: 150 }} value={editing.trackingId} onChange={e => setEditing(x => ({ ...x, trackingId: e.target.value.toUpperCase() }))} /></td>
-                  <td><input className="fc-input" style={{ ...inp, minWidth: 100 }} value={editing.orderRef} onChange={ed('orderRef')} /></td>
-                  <td />
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td data-label="Shipped"><input className="fc-input" type="date" style={{ ...inp, width: 150 }} value={editing.shippedOn} onChange={ed('shippedOn')} /></td>
+                  <td data-label="Customer"><input className="fc-input" style={{ ...inp, minWidth: 150 }} value={editing.name} onChange={ed('name')} autoFocus /></td>
+                  <td data-label="Pincode"><input className="fc-input" style={{ ...inp, width: 90 }} inputMode="numeric" value={editing.pincode} onChange={ed('pincode')} /></td>
+                  <td data-label="Tracking no."><input className="fc-input fc-mono" style={{ ...inp, minWidth: 150 }} value={editing.trackingId} onChange={e => setEditing(x => ({ ...x, trackingId: e.target.value.toUpperCase() }))} /></td>
+                  <td data-label="Order"><input className="fc-input" style={{ ...inp, minWidth: 100 }} value={editing.orderRef} onChange={ed('orderRef')} /></td>
+                  <td className="fc-cards-hide" />
+                  <td className="fc-cards-actions" style={{ whiteSpace: 'nowrap' }}>
                     <Button size="sm" busy={saving} onClick={saveEdit}>Save</Button>{' '}
                     <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>Cancel</Button>
                   </td>
                 </tr>
               ) : (
                 <tr key={r.id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.shipped_on)}</td>
-                  <td className="fc-strong">{r.customer_name || '—'}</td>
-                  <td>{r.pincode || '—'}</td>
-                  <td className="fc-mono">{r.tracking_id}</td>
-                  <td className="fc-muted">{r.order_ref || '—'}</td>
-                  <td className="fc-muted fc-small">{{ excel: 'Excel', photo: 'Photo', manual: 'Typed' }[r.source] || r.source}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
+                  <td data-label="Shipped" style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.shipped_on)}</td>
+                  <td data-label="Customer" className="fc-strong fc-cards-title">{r.customer_name || '—'}</td>
+                  <td data-label="Pincode">{r.pincode || '—'}</td>
+                  <td data-label="Tracking no." className="fc-mono">{r.tracking_id}</td>
+                  <td data-label="Order" className="fc-muted">{r.order_ref || '—'}</td>
+                  <td data-label="Added by" className="fc-muted fc-small">{{ excel: 'Excel', photo: 'Photo', manual: 'Typed' }[r.source] || r.source}</td>
+                  <td className="fc-cards-actions" style={{ whiteSpace: 'nowrap' }}>
                     <Button variant="ghost" size="sm" onClick={() => startEdit(r)} disabled={!!editing}>Edit</Button>{' '}
                     <Button variant="danger" size="sm" onClick={() => del(r)} disabled={!!editing}>Remove</Button>
                   </td>
