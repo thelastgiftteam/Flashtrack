@@ -205,7 +205,7 @@ function Hero() {
           </div>
           <Phone className="ft-rise relative z-10 mx-auto mt-4"><LiveScreen /></Phone>
           <Postmark className="ft-postmark-anim absolute -right-1 bottom-6 z-20 hidden w-[120px] sm:block text-[#DF1515] sm:-right-6 sm:w-[150px] md:-right-12 md:w-[170px] lg:-bottom-14" />
-          <a href="/demo" className="ft-hand mt-5 block text-center text-[24px] text-[#DF1515] underline decoration-2 underline-offset-4 xl:hidden">tap here to try the real page</a>
+          <p className="ft-hand mt-5 text-center text-[24px] text-[#DF1515] xl:hidden">this is the real page, try it</p>
         </div>
       </Wrap>
     </section>
@@ -689,12 +689,7 @@ a:focus-visible,summary:focus-visible{outline:3px solid #FEC200;outline-offset:3
 .ft-plus{transition:transform .2s;}
 .ft-faq[open] .ft-plus{transform:rotate(45deg);}
 
-/* Phones: the phone pictures are previews, so a thumb scrolls the page instead
-   of getting caught inside them; motion is a simple fade, nothing slides sideways */
-@media (hover:none),(max-width:767px){
-  .ft-embed{pointer-events:none;}
-  .ft-embed-scroll{overflow:hidden;}
-}
+/* Phones: motion is a simple fade, nothing slides sideways */
 @keyframes ftFadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 @media (max-width:767px){
   .ft-h-in,.ft-hint{animation-name:ftFadeUp;animation-duration:.45s;}
