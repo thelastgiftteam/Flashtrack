@@ -1,6 +1,7 @@
 // One brand: everything on its page in the admin console, and edits.
 import { api, str, Problem, canManage } from '../../../../../lib/api';
 import { q, one } from '../../../../../lib/db';
+import { STAGE_SET, stageLabel } from '../../../../../lib/leads';
 import { access, validCode, refreshPage, logEvent, todayIST, usage } from '../../../../../lib/brands';
 import { pageFields, updateBrand } from '../../../app/brand';
 
@@ -60,6 +61,11 @@ export default api({
       if (!canManage(staff, b)) throw new Problem(403, 'Only an admin or this brand’s manager can change the paid date.');
       fields.paid_until = /^\d{4}-\d{2}-\d{2}$/.test(body.paidUntil || '') ? body.paidUntil : null;
       log.push(['billing', `Paid-until date set to ${fields.paid_until || 'none (trial)'}`]);
+    }
+    if (body.leadStage !== undefined) {
+      if (!STAGE_SET.has(body.leadStage)) throw new Problem(400, 'Unknown stage.');
+      fields.lead_stage = body.leadStage;
+      if (body.leadStage !== b.lead_stage) log.push(['lead', `Moved to “${stageLabel(body.leadStage)}”`]);
     }
     if (body.notes !== undefined) fields.notes = str(body.notes, 4000);
     if (body.code !== undefined) {

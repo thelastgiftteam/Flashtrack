@@ -62,7 +62,7 @@ export default function Today() {
                 <BrandRows rows={filt(data.renewals)} empty="No renewals this week"
                   show={b => <><AccessPill access={b.access} /><div className="fc-small fc-muted" style={{ marginTop: 3 }}>{b.access.daysLeft === 0 ? 'today' : `in ${b.access.daysLeft} day${b.access.daysLeft > 1 ? 's' : ''}`}</div></>} />
               </Card>
-              <Card title="New this week" pad={false}>
+              <Card title="New this week" action={<Link className="fc-link fc-small" href="/admin/signups">All signups →</Link>} pad={false}>
                 <BrandRows rows={data.fresh} empty="No new brands this week"
                   show={b => <><AccessPill access={b.access} /><div className="fc-small fc-muted" style={{ marginTop: 3 }}>{b.manager ? b.manager : 'No manager yet'}</div></>} />
               </Card>

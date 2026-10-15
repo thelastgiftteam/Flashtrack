@@ -59,11 +59,12 @@ export default function AdminFrame({ title, subtitle, actions, children }) {
   const router = useRouter();
   const { data, error } = useData('/api/admin/auth', '/admin/login');
   const [alerts, setAlerts] = useState(null);
+  const [fresh, setFresh] = useState(0);
   const me = data?.staff;
   useEffect(() => {
     if (!me) return;
     let alive = true;
-    const load = () => call('/api/admin/alerts').then(d => alive && setAlerts(d.alerts)).catch(() => {});
+    const load = () => call('/api/admin/alerts').then(d => { if (alive) { setAlerts(d.alerts); setFresh(d.newSignups || 0); } }).catch(() => {});
     load();
     const t = setInterval(load, 10 * 60 * 1000);
     return () => { alive = false; clearInterval(t); };
@@ -76,6 +77,7 @@ export default function AdminFrame({ title, subtitle, actions, children }) {
   const urgent = alerts ? alerts.filter(a => a.tone === 'red').length : 0;
   const nav = [
     { href: '/admin', label: 'Today', icon: '◷', badge: urgent || null },
+    { href: '/admin/signups', label: 'Signups', icon: '✦', badge: fresh || null },
     { href: '/admin/brands', label: 'Brands', icon: '▦' },
     { href: '/admin/team', label: 'Team', icon: '◉' },
   ];
