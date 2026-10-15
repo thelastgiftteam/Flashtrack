@@ -14,11 +14,13 @@ export default function DemoList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { // client-side so times are always current
+    // /demo?fallback=1 previews the "tracking is down" India Post panel
+    const fallback = /[?&]fallback=1\b/.test(window.location.search);
     const list = demoList()
       .sort((a, b) => (a.shippedOn < b.shippedOn ? 1 : -1))
       .map(o => ({
         name: o.name, orderId: o.orderId, pincode: o.pincode, trackingId: o.id,
-        status: o.status, trackingLink: `/demo/${o.id}`, shippedOn: fmtDay(o.shippedOn),
+        status: o.status, trackingLink: fallback ? '' : `/demo/${o.id}`, shippedOn: fmtDay(o.shippedOn),
       }));
     setOrders(list);
     setLoading(false);

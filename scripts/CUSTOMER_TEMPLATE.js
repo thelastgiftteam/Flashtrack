@@ -10,6 +10,8 @@
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('📦 EasyOrderTracking')
+    .addItem('📥 Import shipments (India Post)', 'importShipments')
+    .addSeparator()
     .addItem('📢 Generate Report (WhatsApp)', 'generateReport')
     .addItem('💰 Generate Billing',           'generateBilling')
     .addItem('🔄 Update Website',             'updateWebsite')
@@ -110,6 +112,193 @@ function generateTrackingLink_(trackingId) {
   var json    = '{"t":"' + id + '","c":"' + carrier + '"}';
   var encoded = Utilities.base64Encode(json);
   return 'https://speedposttrack.io/tracking-result?d=' + encoded;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// importShipments — paste India Post's export, click once.
+// 1. Open the "paste_here" tab (created automatically on first click)
+// 2. Paste the whole India Post export (with its header row) into A1
+// 3. Menu → 📥 Import shipments
+// New tracking IDs are added to daily_tracking (name, pincode, booked
+// date, order ID, tracking link). Tracking IDs already in the sheet
+// only get their Delivery Status updated. Delivered is never undone.
+// ─────────────────────────────────────────────────────────────────
+var FT_PASTE_TAB = 'paste_here';
+
+function importShipments() {
+  var ui    = SpreadsheetApp.getUi();
+  var paste = ss_().getSheetByName(FT_PASTE_TAB);
+  if (!paste) {
+    paste = ss_().insertSheet(FT_PASTE_TAB);
+    paste.getRange('A1').setNote('Paste the India Post export here (including the header row), then click Import shipments again.');
+  }
+
+  var values = paste.getDataRange().getValues();
+  var parsed = ftParseExport_(values);
+  if (parsed.error) {
+    paste.activate();
+    ui.alert(parsed.error + '\n\nPaste the India Post export (with its header row) into cell A1 of the "' +
+      FT_PASTE_TAB + '" tab, then click 📥 Import shipments again.');
+    return;
+  }
+
+  var track = ss_().getSheetByName('daily_tracking');
+  if (!track) { ui.alert('daily_tracking sheet not found.'); return; }
+
+  var lastCol = Math.max(track.getLastColumn(), 10);
+  var headers = track.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h).trim(); });
+  function ci(name) { return headers.indexOf(name); }
+  var need = ['Order ID', 'Customer Name', 'Pincode', 'Tracking ID', 'Shipped On', 'Delivery Status', 'Tracking Link'];
+  for (var n = 0; n < need.length; n++) {
+    if (ci(need[n]) < 0) { ui.alert('daily_tracking is missing the "' + need[n] + '" column.'); return; }
+  }
+
+  // Existing tracking IDs → sheet row number
+  var lastRow  = track.getLastRow();
+  var existing = {};
+  var statusCol = ci('Delivery Status') + 1;
+  var oldStatus = [];
+  if (lastRow >= 2) {
+    var tids = track.getRange(2, ci('Tracking ID') + 1, lastRow - 1, 1).getValues();
+    oldStatus = track.getRange(2, statusCol, lastRow - 1, 1).getValues();
+    for (var r = 0; r < tids.length; r++) {
+      var t = String(tids[r][0] || '').trim().toUpperCase();
+      if (t) existing[t] = r; // index into oldStatus
+    }
+  }
+
+  // Last row that actually has data (getLastRow can count formatted blanks)
+  var dataEnd = 1;
+  if (lastRow >= 2) {
+    var keyCols = track.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    for (var k = keyCols.length - 1; k >= 0; k--) {
+      if (keyCols[k].join('') !== '') { dataEnd = k + 2; break; }
+    }
+  }
+
+  var config  = kvRead_(ss_(), '_config');
+  var prefix  = String(config['brand_prefix'] || 'ORD').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3) || 'ORD';
+  var today   = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'ddMMyyyy');
+  var newRows = [];
+  var updated = 0, unchanged = 0, seen = {};
+
+  parsed.rows.forEach(function(p) {
+    if (seen[p.trackingId]) return;
+    seen[p.trackingId] = true;
+
+    if (existing.hasOwnProperty(p.trackingId)) {
+      var idx = existing[p.trackingId];
+      var cur = String(oldStatus[idx][0] || '').trim();
+      if (/^delivered$/i.test(cur) || cur === p.status) { unchanged++; return; }
+      oldStatus[idx][0] = p.status;
+      updated++;
+      return;
+    }
+
+    var rowNum = dataEnd + newRows.length + 1;
+    var row = [];
+    for (var c = 0; c < lastCol; c++) row.push('');
+    row[ci('Order ID')]        = prefix + '-' + today + '-' + String(rowNum - 1).padStart(3, '0');
+    row[ci('Customer Name')]   = p.name;
+    row[ci('Pincode')]         = p.pincode;
+    row[ci('Tracking ID')]     = p.trackingId;
+    row[ci('Shipped On')]      = p.bookedOn || new Date();
+    row[ci('Delivery Status')] = p.status;
+    row[ci('Tracking Link')]   = ftTrackingLink_(p.trackingId, config);
+    newRows.push(row);
+  });
+
+  if (updated) track.getRange(2, statusCol, oldStatus.length, 1).setValues(oldStatus);
+  if (newRows.length) {
+    var start = dataEnd + 1;
+    track.getRange(start, 1, newRows.length, lastCol).setValues(newRows);
+    track.getRange(start, ci('Shipped On') + 1, newRows.length, 1).setNumberFormat('dd MMM yyyy');
+  }
+
+  paste.clearContents();
+  track.activate();
+
+  ui.alert(
+    '✅ Import done\n\n' +
+    'New shipments added: ' + newRows.length + '\n' +
+    'Statuses updated: ' + updated + '\n' +
+    'Already up to date: ' + unchanged +
+    (parsed.skipped ? '\nSkipped (no tracking ID): ' + parsed.skipped : '') +
+    '\n\nCustomers see the changes within about 5 minutes.'
+  );
+}
+
+// Reads the pasted grid. Finds the header row by name, so column order
+// and extra columns in India Post's export don't matter.
+function ftParseExport_(values) {
+  if (!values || !values.length || String(values.join('')).replace(/,/g, '') === '') {
+    return { error: 'Nothing pasted yet.' };
+  }
+  var hRow = -1, H = {};
+  for (var i = 0; i < Math.min(values.length, 10); i++) {
+    var cells = values[i].map(function(v) { return String(v).trim().toLowerCase(); });
+    if (cells.indexOf('article-number') >= 0) {
+      hRow = i;
+      cells.forEach(function(h, idx) { if (h && !H.hasOwnProperty(h)) H[h] = idx; });
+      break;
+    }
+  }
+  if (hRow < 0) return { error: 'Could not find the "article-number" column. Is this the India Post export?' };
+
+  function get(row, name) { return H.hasOwnProperty(name) ? row[H[name]] : ''; }
+
+  var rows = [], skipped = 0;
+  for (var r = hRow + 1; r < values.length; r++) {
+    var row = values[r];
+    var tid = String(get(row, 'article-number') || '').replace(/\s+/g, '').toUpperCase();
+    if (!tid) { if (row.join('') !== '') skipped++; continue; }
+    rows.push({
+      trackingId: tid,
+      name:       ftTitleCase_(get(row, 'receiver-name')),
+      pincode:    String(get(row, 'destination-pin') || '').replace(/\D/g, ''),
+      bookedOn:   ftParseDate_(get(row, 'booking-date-time')),
+      status:     ftStatus_(get(row, 'event-description')),
+    });
+  }
+  if (!rows.length) return { error: 'Found the header row but no shipments under it.' };
+  return { rows: rows, skipped: skipped };
+}
+
+// India Post event text → the status customers see
+function ftStatus_(desc) {
+  var d = String(desc || '').toLowerCase();
+  if (/return|rts|sender/.test(d))                                return 'Returning to sender';
+  if (/deliver/.test(d) && !/not|fail|attempt|out for/.test(d)) return 'Delivered';
+  if (/out for deliver/.test(d))                                  return 'Out for delivery';
+  if (/not deliver|attempt|absent|refus|door locked|hold|held|retain|deposit/.test(d)) return 'Held at post office';
+  return 'Transit';
+}
+
+// "ABHIJITH N V" → "Abhijith N V", "SONU KK" → "Sonu KK"
+function ftTitleCase_(s) {
+  return String(s || '').trim().replace(/\s+/g, ' ').split(' ').map(function(w) {
+    if (w.length <= 2) return w.toUpperCase();
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+// "2026/10/13T15:20:47" (or a Date Sheets already converted) → Date at midnight
+function ftParseDate_(v) {
+  if (v instanceof Date && !isNaN(v)) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  var m = String(v || '').match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = String(v || '').match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/); // dd/mm/yyyy
+  if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  return null;
+}
+
+// Same as generateTrackingLink_ but reuses the config already read
+function ftTrackingLink_(trackingId, config) {
+  var customUrl = String(config['tracking_base_url'] || '').trim();
+  if (customUrl && customUrl.indexOf('{id}') >= 0) return customUrl.replace('{id}', encodeURIComponent(trackingId));
+  var id      = String(trackingId).trim().toLowerCase();
+  var carrier = id.toUpperCase().endsWith('IN') ? 'speedpost' : 'dtdc';
+  return 'https://speedposttrack.io/tracking-result?d=' + Utilities.base64Encode('{"t":"' + id + '","c":"' + carrier + '"}');
 }
 
 // ─────────────────────────────────────────────────────────────────
