@@ -9,12 +9,29 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey, pa
   const [err, setErr] = useState('');
   const [editing, setEditing] = useState(null); // { id, trackingId, name, pincode, orderRef, shippedOn }
   const [saving, setSaving] = useState(false);
+  const [picked, setPicked] = useState(() => new Set()); // ids ticked for removal
+  const [removing, setRemoving] = useState(false);
 
   const load = useCallback(async () => {
     try { setData(await call(`${url}${url.includes('?') ? '&' : '?'}q=${encodeURIComponent(q)}&page=${page}`)); setErr(''); }
     catch (e) { setErr(e.message); }
   }, [url, q, page]);
   useEffect(() => { const t = setTimeout(load, q ? 250 : 0); return () => clearTimeout(t); }, [load, q, refreshKey]);
+  useEffect(() => { setPicked(new Set()); }, [url, q, page, refreshKey]);
+
+  const rows = data?.rows || [];
+  const allPicked = rows.length > 0 && rows.every(r => picked.has(r.id));
+  function toggle(id) { setPicked(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
+  function toggleAll() { setPicked(allPicked ? new Set() : new Set(rows.map(r => r.id))); }
+  async function removePicked() {
+    const n = picked.size;
+    if (!window.confirm(`Remove ${n} shipment${n > 1 ? 's' : ''} from the page? This can’t be undone.`)) return;
+    setRemoving(true);
+    try {
+      const out = await call(url, { method: 'DELETE', body: { ids: [...picked] } });
+      toast(`${out.removed} removed`); setPicked(new Set()); load();
+    } catch (e) { toast(e.message, 'err'); } finally { setRemoving(false); }
+  }
 
   const qs = p => `${url}${url.includes('?') ? '&' : '?'}${deleteParam}=${p}`;
   function startEdit(r) {
@@ -45,16 +62,29 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey, pa
       <div style={{ padding: 14, borderBottom: '1px solid #F1F1F3' }}>
         <input className="fc-input" placeholder="Search name, pincode, tracking number or order" value={q} onChange={e => { setQ(e.target.value); setPage(0); }} />
       </div>
+      {rows.length > 0 && (
+        <div className={`fc-bulk ${picked.size ? 'is-on' : ''}`}>
+          <label className="fc-check"><input type="checkbox" checked={allPicked} onChange={toggleAll} disabled={!!editing} />
+            <span>{picked.size ? `${picked.size} selected` : `Select all ${rows.length}${data.more || page > 0 ? ' on this page' : ''}`}</span></label>
+          {picked.size > 0 && (
+            <span className="fc-row" style={{ gap: 8 }}>
+              <Button variant="ghost" size="sm" onClick={() => setPicked(new Set())}>Clear</Button>
+              <Button variant="danger" size="sm" busy={removing} onClick={removePicked}>Remove {picked.size}</Button>
+            </span>
+          )}
+        </div>
+      )}
       {err && <div className="fc-alert is-err" style={{ margin: 14 }}>⚠ {err}</div>}
       {!data && !err && <Loading />}
       {data && data.rows.length === 0 && <Empty icon={q ? '🔍' : past ? '🗂' : '📦'} title={q ? 'Nothing matches that search' : past ? 'No past shipments yet' : 'No shipments in the last 30 days'}>{q ? 'Try a different name or number.' : past ? 'Shipments move here 30 days after they’re shipped. Customers no longer see them.' : 'Shipments you add show up here.'}</Empty>}
       {data && data.rows.length > 0 && (
         <div className="fc-table-wrap">
           <table className="fc-table fc-cards">
-            <thead><tr><th>Shipped</th><th>Customer</th><th>Pincode</th><th>Tracking number</th><th>Order</th><th>Added by</th><th /></tr></thead>
+            <thead><tr><th style={{ width: 36 }} /><th>Shipped</th><th>Customer</th><th>Pincode</th><th>Tracking number</th><th>Order</th><th>Added by</th><th /></tr></thead>
             <tbody>
               {data.rows.map(r => editing && editing.id === r.id ? (
                 <tr key={r.id} style={{ background: '#FFFCF0' }}>
+                  <td className="fc-cards-hide" />
                   <td data-label="Shipped"><input className="fc-input" type="date" style={{ ...inp, width: 150 }} value={editing.shippedOn} onChange={ed('shippedOn')} /></td>
                   <td data-label="Customer"><input className="fc-input" style={{ ...inp, minWidth: 150 }} value={editing.name} onChange={ed('name')} autoFocus /></td>
                   <td data-label="Pincode"><input className="fc-input" style={{ ...inp, width: 90 }} inputMode="numeric" value={editing.pincode} onChange={ed('pincode')} /></td>
@@ -67,7 +97,8 @@ export default function ShipmentsTable({ url, deleteParam = 'id', refreshKey, pa
                   </td>
                 </tr>
               ) : (
-                <tr key={r.id}>
+                <tr key={r.id} className={picked.has(r.id) ? 'is-picked' : undefined}>
+                  <td className="fc-cards-check"><input type="checkbox" aria-label={`Select ${r.tracking_id}`} checked={picked.has(r.id)} onChange={() => toggle(r.id)} disabled={!!editing} /></td>
                   <td data-label="Shipped" style={{ whiteSpace: 'nowrap' }}>{fmtDate(r.shipped_on)}</td>
                   <td data-label="Customer" className="fc-strong fc-cards-title">{r.customer_name || '—'}</td>
                   <td data-label="Pincode">{r.pincode || '—'}</td>

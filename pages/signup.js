@@ -28,7 +28,7 @@ export default function Signup() {
     <AuthLayout title="Start your free trial" sub="14 days free. No card needed. Your tracking page is ready as soon as you sign up."
       foot={<>Already have an account? <Link href="/login" className="fc-link">Log in</Link></>}>
       <form className="fc-form" onSubmit={submit}>
-        {tried > 0 && <div className="fc-alert is-ok">📄 Your {tried} parcel{tried > 1 ? 's' : ''} from the file will be added right after this.</div>}
+        {tried > 0 && <div className="fc-alert is-ok">📄 Next, we’ll ask if you want the {tried} parcel{tried > 1 ? 's' : ''} from your file added to your page.</div>}
         <Field label="Brand name"><input className="fc-input" required maxLength={80} value={f.brandName} onChange={set('brandName')} placeholder="e.g. WT Frames" /></Field>
         <Field label="Your name"><input className="fc-input" autoComplete="name" value={f.name} onChange={set('name')} /></Field>
         <Field label="WhatsApp number" hint="Customers can message you on this from your page. You can change it later.">

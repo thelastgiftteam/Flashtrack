@@ -61,7 +61,15 @@ export async function updateShipment(res, brand, id, b = {}) {
   return { row };
 }
 
-export async function deleteShipment(res, brand, id) {
+export async function deleteShipment(res, brand, id, ids) {
+  // Several at once: body { ids: [...] }
+  if (Array.isArray(ids)) {
+    const list = ids.map(x => parseInt(x, 10)).filter(Boolean).slice(0, 500);
+    if (!list.length) throw new Problem(400, 'Nothing selected.');
+    const gone = await q('delete from shipments where brand_id = $1 and id = any($2::bigint[]) returning id', [brand.id, list]);
+    await refreshPage(res, brand.code);
+    return { ok: true, removed: gone.length };
+  }
   const n = parseInt(id, 10);
   if (!n) throw new Problem(400, 'Missing shipment.');
   const del = await one('delete from shipments where id = $1 and brand_id = $2 returning id', [n, brand.id]);
@@ -74,5 +82,5 @@ export default api({
   GET: (req, res, { brand }) => listShipments(brand.id, req.query),
   POST: (req, res, { brand, user }) => addShipments(res, brand, req.body, { userId: user.id }),
   PATCH: (req, res, { brand }) => updateShipment(res, brand, req.query.id, req.body),
-  DELETE: (req, res, { brand }) => deleteShipment(res, brand, req.query.id),
+  DELETE: (req, res, { brand }) => deleteShipment(res, brand, req.query.id, req.body?.ids),
 }, { auth: 'user' });
