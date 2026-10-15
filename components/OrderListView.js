@@ -1,23 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import BrandBar from './BrandBar';
-import { C, FONT_HREF, BASE_CSS } from '../lib/ftTheme';
+import { C, FONT_HREF, BASE_CSS, UI_CSS } from '../lib/ftTheme';
 
 // Shared UI for a brand's order list. Used by /[code] (live orders from the
-// brand's sheet) and /demo (sample data). Data loading stays in the pages.
+// brand's sheet), /demo (sample data) and the homepage phone mockups
+// (embedded, so the homepage always shows exactly what customers see).
 //
-// orders: [{ name, orderId, pincode, trackingId, status, trackingLink, shippedOn, isNew }]
+// orders: [{ name, orderId, pincode, trackingId, trackingLink, shippedOn, isNew }]
 // t:      translation strings (see T in pages/[code].js)
 
 const EN = {
   orderTracking: 'Order tracking', tapToRefresh: 'Refresh', updating: 'Updating…',
-  searchPlaceholder: 'Search by name, pincode or order ID...', liveOrders: 'Live orders',
+  searchPlaceholder: 'Search name, pincode or order ID', liveOrders: 'Live orders',
   results: n => `${n} result${n !== 1 ? 's' : ''}`, noOrders: 'No active orders right now',
   checkBackSoon: 'Check back soon', noResultsFor: q => `No results for "${q}"`,
   tryDifferent: 'Try a different name or order ID',
 };
 
-const AVATAR = ['#D7262E', '#1D4ED8', '#16884F', '#B45309', '#7C3AED', '#0E7490'];
+const INDIA_POST = 'https://www.indiapost.gov.in/';
+const AVATAR = ['#121212', '#DF1515', '#9A6F00', '#7A1010', '#3F3F46', '#C4050A'];
+
 function avatarColor(name = '') {
   let h = 0;
   for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % AVATAR.length;
@@ -29,16 +32,47 @@ function initials(name = '') {
 function isInternal(link = '') {
   return link.startsWith('/') || /flashtrack\.io\//i.test(link);
 }
-const INDIA_POST = 'https://www.indiapost.gov.in/';
 
-function copyText(text) {
-  try { return navigator.clipboard.writeText(text); } catch { return Promise.reject(); }
+// Copy that also works inside WhatsApp's and Instagram's in-app browsers,
+// where navigator.clipboard is often missing. Must run inside the tap.
+export function copyText(text) {
+  let ok = false;
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.readOnly = true;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px;';
+    document.body.appendChild(ta);
+    const range = document.createRange();
+    range.selectNodeContents(ta);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    ta.setSelectionRange(0, text.length);
+    ok = document.execCommand('copy');
+    sel.removeAllRanges();
+    document.body.removeChild(ta);
+  } catch { /* fall through to the clipboard API */ }
+  try { navigator.clipboard?.writeText(text).catch(() => {}); ok = ok || !!navigator.clipboard; } catch { /* ignore */ }
+  return ok;
 }
 
-// Shown when speedposttrack.io is down: copy the number, open India Post.
-function IndiaPostSheet({ tid, onClose }) {
-  const [copied, setCopied] = useState(false);
-  function copy() { copyText(tid).then(() => setCopied(true), () => {}); }
+function Bolt({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M13.5 2 4 13.5h6.2L8.8 22 20 9.8h-6.4L13.5 2Z" fill={C.yellow} />
+    </svg>
+  );
+}
+
+// Opens when the tracking site is down (or the brand switched the sheet to
+// India Post). The number is copied the moment the customer taps Track, and
+// again when they tap Open India Post, so all that's left is paste + captcha.
+function IndiaPostSheet({ tid, copiedAtOpen, onClose }) {
+  const [copied, setCopied] = useState(copiedAtOpen);
+  const [flashKey, setFlashKey] = useState(0);
+  const copy = () => { const ok = copyText(tid); setCopied(ok); setFlashKey(k => k + 1); };
+
   useEffect(() => {
     const k = e => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', k);
@@ -46,37 +80,40 @@ function IndiaPostSheet({ tid, onClose }) {
   }, [onClose]);
 
   const step = n => (
-    <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: C.ink, color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</span>
+    <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', background: C.ink, color: '#fff', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</span>
   );
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Track on India Post" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(20,33,61,.45)' }} />
-      <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: C.paper, borderRadius: '22px 22px 0 0', padding: '10px 20px calc(22px + env(safe-area-inset-bottom))', boxShadow: '0 -12px 40px -12px rgba(20,33,61,.35)' }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.line, margin: '0 auto 14px' }} />
-        <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', right: 14, top: 12, width: 32, height: 32, borderRadius: '50%', border: 'none', background: C.mist, color: C.ink, fontSize: 14, cursor: 'pointer' }}>✕</button>
+      <div onClick={onClose} className="ft-anim" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.5)', animation: 'ftFade .2s ease both' }} />
+      <div className="ft-anim" style={{ position: 'relative', width: '100%', maxWidth: 480, background: C.paper, borderRadius: '22px 22px 0 0', overflow: 'hidden', boxShadow: '0 -16px 40px -12px rgba(0,0,0,.4)', animation: 'ftUp .38s cubic-bezier(.2,.9,.25,1) both' }}>
+        <div style={{ background: C.red, color: '#fff', padding: '18px 20px 16px', position: 'relative' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 4, background: 'rgba(255,255,255,.45)', margin: '-6px auto 12px' }} />
+          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', right: 14, top: 14, width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,.18)', color: '#fff', fontSize: 14, cursor: 'pointer' }}>✕</button>
+          <div className="ft-display" style={{ fontSize: 22, paddingRight: 40 }}>Track on India Post</div>
+          <div style={{ fontSize: 14, marginTop: 4, color: 'rgba(255,255,255,.9)' }}>
+            {copied ? 'Your tracking number is copied. Paste it on India Post.' : 'Copy your tracking number, then open India Post.'}
+          </div>
+        </div>
 
-        <div className="ft-display" style={{ fontSize: 20, paddingRight: 40 }}>Track on India Post</div>
-        <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>Live tracking is busy right now. It takes 3 steps on the India Post site.</div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 18 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '18px 20px calc(22px + env(safe-area-inset-bottom))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {step(1)}
-            <button onClick={copy} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px', borderRadius: 12, border: `2px dashed ${copied ? C.green : C.ink}`, background: copied ? '#E7F6EE' : C.mist, color: C.ink, cursor: 'pointer' }}>
-              <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tid}</span>
-              <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: copied ? C.green : C.red }}>{copied ? '✓ Copied' : 'Copy'}</span>
+            <button onClick={copy} className="ft-chip" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px', borderRadius: 12, border: `2px dashed ${copied ? C.green : C.ink}`, background: copied ? '#E7F6EE' : C.mist, color: C.ink, cursor: 'pointer' }}>
+              <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.06em', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tid}</span>
+              <span key={flashKey} className={copied ? 'ft-pop' : ''} style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: copied ? C.green : C.red }}>{copied ? '✓ Copied' : 'Copy'}</span>
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {step(2)}
-            <a href={INDIA_POST} target="_blank" rel="noopener noreferrer" onClick={copy}
-              style={{ flex: 1, textAlign: 'center', padding: '13px 14px', borderRadius: 12, background: C.red, color: '#fff', fontSize: 15, fontWeight: 700 }}>
-              Open India Post ↗
+            <a href={INDIA_POST} target="_blank" rel="noopener noreferrer" onClick={() => { copyText(tid); setCopied(true); }} className="ft-go"
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', borderRadius: 12, background: C.ink, color: '#fff', fontSize: 15.5, fontWeight: 700 }}>
+              Open India Post <span aria-hidden="true" style={{ color: C.yellow }}>↗</span>
             </a>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {step(3)}
-            <span style={{ fontSize: 14, color: C.ink, lineHeight: 1.4 }}>Paste the number, type the captcha, tap <b>Search</b>.</span>
+            <span style={{ fontSize: 14, color: C.ink, lineHeight: 1.45 }}>Paste the number in the tracking box, type the captcha, tap <b>Search</b>.</span>
           </div>
         </div>
       </div>
@@ -84,26 +121,39 @@ function IndiaPostSheet({ tid, onClose }) {
   );
 }
 
-function OrderCard({ order, isNew, fallback, onFallback }) {
+function OrderCard({ order, isNew, index, fallback, onFallback }) {
   const [copied, setCopied] = useState(false);
+  const [flash, setFlash] = useState(false);
   const tid = order.trackingId || '';
-  const link = order.trackingLink;
+  const link = order.trackingLink || '';
+  const usePanel = tid && (fallback || !link) && /speedposttrack\.io|^$/i.test(link);
 
   function copy() {
     if (!tid) return;
-    navigator.clipboard?.writeText(tid).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); });
+    copyText(tid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   }
+  function pressed() { setFlash(true); setTimeout(() => setFlash(false), 460); }
+
+  const btnStyle = {
+    flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 999,
+    border: 'none', background: C.red, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+  };
 
   return (
-    <article style={{ position: 'relative', background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18, padding: '16px 16px 14px', borderLeft: `5px solid ${C.red}` }}>
+    <article className="ft-card ft-anim" style={{
+      position: 'relative', background: C.paper, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 16px 14px',
+      borderLeft: `4px solid ${C.red}`, animation: `ftIn .42s cubic-bezier(.2,.8,.2,1) ${Math.min(index, 8) * 50}ms both`,
+    }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ width: 44, height: 44, borderRadius: '50%', background: avatarColor(order.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
           {initials(order.name)}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="ft-display" style={{ fontSize: 16.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.name}</span>
-            {isNew && <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#7A5600', background: '#FFF4D1', borderRadius: 999, padding: '2px 8px' }}>New</span>}
+            <span className="ft-display" style={{ fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.name}</span>
+            {isNew && <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: C.ink, background: C.yellow, borderRadius: 999, padding: '2px 8px' }}>New</span>}
           </div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 2, display: 'flex', flexWrap: 'wrap', gap: '2px 12px' }}>
             {order.orderId && <span>{order.orderId}</span>}
@@ -113,24 +163,23 @@ function OrderCard({ order, isNew, fallback, onFallback }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 14, paddingTop: 12, borderTop: `1px dashed ${C.line}` }}>
-        <button onClick={copy} disabled={!tid} title="Copy tracking number" style={{
+        <button onClick={copy} disabled={!tid} title="Copy tracking number" className="ft-chip" style={{
           display: 'flex', alignItems: 'center', gap: 6, minWidth: 0,
-          background: C.mist, border: `1px solid ${C.line}`, borderRadius: 10, padding: '7px 10px',
+          background: copied ? '#E7F6EE' : C.mist, border: `1px solid ${copied ? '#BFE5CF' : C.line}`, borderRadius: 10, padding: '7px 10px',
           color: copied ? C.green : C.ink, fontSize: 13, fontWeight: 700, letterSpacing: '0.03em',
           fontVariantNumeric: 'tabular-nums', cursor: tid ? 'pointer' : 'default',
         }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{copied ? 'Copied' : (tid || 'Awaiting tracking no.')}</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied' : (tid || 'Awaiting tracking no.')}</span>
           {tid && !copied && <span aria-hidden="true" style={{ color: C.soft }}>⧉</span>}
         </button>
-        {tid && (fallback || !link) && /speedposttrack\.io|^$/i.test(link || '') ? (
-          <button onClick={() => onFallback(tid)}
-            style={{ flexShrink: 0, padding: '9px 18px', borderRadius: 999, border: 'none', background: C.red, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-            Track parcel
+        {usePanel ? (
+          <button onClick={() => { pressed(); onFallback(tid); }} className={`ft-track${flash ? ' is-flash' : ''}`} style={btnStyle}>
+            <Bolt /> Track parcel
           </button>
         ) : link && (
-          <a href={link} {...(isInternal(link) ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
-            style={{ flexShrink: 0, padding: '9px 18px', borderRadius: 999, background: C.red, color: '#fff', fontSize: 14, fontWeight: 700 }}>
-            Track parcel
+          <a href={link} onClick={pressed} {...(isInternal(link) ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+            className={`ft-track${flash ? ' is-flash' : ''}`} style={btnStyle}>
+            <Bolt /> Track parcel
           </a>
         )}
       </div>
@@ -149,11 +198,11 @@ function LangPicker({ langs, lang, setLang }) {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 200 }} />
-          <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 201, background: C.paper, border: `1px solid ${C.line}`, borderRadius: 14, minWidth: 160, overflow: 'hidden', boxShadow: '0 16px 40px -12px rgba(20,33,61,.3)' }}>
+          <div className="ft-anim" style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 201, background: C.paper, border: `1px solid ${C.line}`, borderRadius: 14, minWidth: 160, overflow: 'hidden', boxShadow: '0 16px 40px -12px rgba(0,0,0,.3)', animation: 'ftFade .15s ease both' }}>
             {langs.map(l => (
               <button key={l.code} onClick={() => { setLang(l.code); setOpen(false); }} style={{
                 display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '11px 14px', border: 'none',
-                borderBottom: `1px solid ${C.mist}`, background: l.code === lang ? '#FFF4D1' : C.paper,
+                borderBottom: `1px solid ${C.mist}`, background: l.code === lang ? C.cream : C.paper,
                 color: C.ink, fontSize: 14, fontWeight: l.code === lang ? 700 : 500, cursor: 'pointer', textAlign: 'left',
               }}>
                 <span style={{ width: 24, fontWeight: 700 }}>{l.label}</span>{l.name}
@@ -166,15 +215,29 @@ function LangPicker({ langs, lang, setLang }) {
   );
 }
 
+function PoweredBy({ embedded }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 4px' }}>
+      <a href="https://flashtrack.io/" target="_blank" rel="noopener" tabIndex={embedded ? -1 : undefined}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px 7px 9px', borderRadius: 999, background: C.black, color: '#BDBDC4', fontSize: 12, fontWeight: 600 }}>
+        <img src="/brand/flashtrack-mark.png" alt="" width="26" height="18" style={{ display: 'block' }} />
+        Tracking by
+        <img src="/brand/flashtrack-wordmark.png" alt="FlashTrack" width="82" height="13" style={{ display: 'block' }} />
+      </a>
+    </div>
+  );
+}
+
 export default function OrderListView({
   brandName = 'Order Tracking', orders = [], loading, error, refreshing, onRefresh,
   bottomBar, t = EN, langs, lang, setLang, showSearch = true, banner = null, syncTime,
-  forceFallback = false,
+  forceFallback = false, embedded = false, initialSheet = null,
 }) {
   const [q, setQ] = useState('');
   const [trackerDown, setTrackerDown] = useState(false);
-  const [sheetTid, setSheetTid] = useState(null);
-  const closeSheet = useCallback(() => setSheetTid(null), []);
+  const [sheet, setSheet] = useState(initialSheet ? { tid: initialSheet, copied: true } : null);
+  const closeSheet = useCallback(() => setSheet(null), []);
+  const openSheet = useCallback(tid => setSheet({ tid, copied: copyText(tid) }), []);
 
   // Only ask about speedposttrack if some order actually links there
   const usesSpt = orders.some(o => /speedposttrack\.io/i.test(o.trackingLink || ''));
@@ -198,26 +261,30 @@ export default function OrderListView({
     const last = groups[groups.length - 1];
     if (last && last.key === key) last.items.push(o); else groups.push({ key, items: [o] });
   });
+  let idx = 0;
 
   return (
-    <>
-      <Head>
-        <title>{`${brandName} · Order status`}</title>
-        <meta name="description" content={`Track your order from ${brandName}.`} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#FFFFFF" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href={FONT_HREF} rel="stylesheet" />
-      </Head>
-      <style>{BASE_CSS + 'body{padding-bottom:110px;}'}</style>
+    <div className="ft-ui" style={embedded ? { background: C.mist, color: C.ink, minHeight: '100%', paddingBottom: 110, fontFamily: "'Instrument Sans',system-ui,sans-serif" } : undefined}>
+      {!embedded && (
+        <Head>
+          <title>{`${brandName} · Order status`}</title>
+          <meta name="description" content={`Track your order from ${brandName}.`} />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="theme-color" content="#FFFFFF" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link href={FONT_HREF} rel="stylesheet" />
+        </Head>
+      )}
+      <style>{embedded ? UI_CSS : BASE_CSS + 'body{padding-bottom:110px;}'}</style>
 
       {banner}
 
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: `1px solid ${C.line}` }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,.94)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: `1px solid ${C.line}` }}>
+        <div className="ft-stripe" />
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ minWidth: 0 }}>
-            <div className="ft-display ft-clamp2" style={{ fontSize: 20, lineHeight: 1.15 }}>{brandName}</div>
+            <div className="ft-display ft-clamp2" style={{ fontSize: 21, lineHeight: 1.15 }}>{brandName}</div>
             <div style={{ fontSize: 13, color: C.muted, display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ position: 'relative', width: 8, height: 8 }}>
                 <span className="ft-ping" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: C.green, opacity: .5, animation: 'ftPing 1.6s cubic-bezier(0,0,.2,1) infinite' }} />
@@ -239,12 +306,12 @@ export default function OrderListView({
       </header>
 
       {showSearch && (
-        <div style={{ background: C.yellow, borderBottom: `1px solid #EBB51F` }}>
+        <div style={{ background: C.yellow, borderBottom: `1px solid ${C.yellowDeep}` }}>
           <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px' }}>
             <div style={{ position: 'relative' }}>
               <span aria-hidden="true" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 16 }}>🔍</span>
-              <input value={q} onChange={e => setQ(e.target.value)} placeholder={t.searchPlaceholder} aria-label={t.searchPlaceholder}
-                style={{ width: '100%', padding: '15px 44px 15px 46px', borderRadius: 14, border: `2px solid ${C.ink}`, background: C.paper, color: C.ink, fontSize: 15, fontWeight: 500, outline: 'none', boxShadow: `4px 4px 0 ${C.ink}` }} />
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder={t.searchPlaceholder} aria-label={t.searchPlaceholder} tabIndex={embedded ? -1 : undefined}
+                style={{ width: '100%', padding: '15px 44px 15px 46px', borderRadius: 14, border: `2px solid ${C.ink}`, background: C.paper, color: C.ink, fontSize: 16, fontWeight: 500, outline: 'none', boxShadow: `4px 4px 0 ${C.ink}` }} />
               {q && (
                 <button onClick={() => setQ('')} aria-label="Clear search" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, borderRadius: '50%', border: 'none', background: C.mist, color: C.ink, fontSize: 13, cursor: 'pointer' }}>✕</button>
               )}
@@ -273,7 +340,7 @@ export default function OrderListView({
         )}
 
         {!loading && shown.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '56px 12px', background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18 }}>
+          <div style={{ textAlign: 'center', padding: '56px 12px', background: C.paper, border: `1px solid ${C.line}`, borderRadius: 16 }}>
             <div style={{ fontSize: 42 }}>{s ? '🔍' : '📦'}</div>
             <div className="ft-display" style={{ fontSize: 19, marginTop: 10 }}>{s ? t.noResultsFor(q) : t.noOrders}</div>
             <div style={{ fontSize: 14, color: C.muted, marginTop: 6 }}>{s ? t.tryDifferent : t.checkBackSoon}</div>
@@ -291,15 +358,18 @@ export default function OrderListView({
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {g.items.map((o, i) => (
-                <OrderCard key={o.orderId || o.trackingId || `${gi}-${i}`} order={o} isNew={o.isNew && !s && gi === 0 && i === 0} fallback={fallback} onFallback={setSheetTid} />
+                <OrderCard key={o.orderId || o.trackingId || `${gi}-${i}`} order={o} index={idx++}
+                  isNew={o.isNew && !s && gi === 0 && i === 0} fallback={fallback} onFallback={openSheet} />
               ))}
             </div>
           </section>
         ))}
+
+        {!loading && <PoweredBy embedded={embedded} />}
       </main>
 
       <BrandBar bar={bottomBar} />
-      {sheetTid && <IndiaPostSheet tid={sheetTid} onClose={closeSheet} />}
-    </>
+      {sheet && <IndiaPostSheet key={sheet.tid} tid={sheet.tid} copiedAtOpen={sheet.copied} onClose={closeSheet} />}
+    </div>
   );
 }

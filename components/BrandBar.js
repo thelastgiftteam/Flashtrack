@@ -11,7 +11,7 @@ export default function BrandBar({ bar }) {
       padding: '15px 20px', borderRadius: 999,
       background: isBtn ? C.wa : C.ink, color: '#fff',
       fontSize: 15, fontWeight: 600, textAlign: 'center',
-      boxShadow: '0 10px 30px -10px rgba(20,33,61,.45)',
+      boxShadow: '0 10px 30px -10px rgba(0,0,0,.45)',
     }}>
       {isBtn && (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ flexShrink: 0 }}>
@@ -25,7 +25,7 @@ export default function BrandBar({ bar }) {
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
       padding: '14px 16px 18px',
-      background: `linear-gradient(to top, ${C.mist} 55%, rgba(243,245,249,0))`,
+      background: `linear-gradient(to top, ${C.mist} 55%, rgba(244,244,245,0))`,
     }}>
       <div style={{ maxWidth: 600, margin: '0 auto' }}>
         {isBtn ? <a href={bar.link} target="_blank" rel="noreferrer">{inner}</a> : inner}

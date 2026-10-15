@@ -39,7 +39,7 @@ const T = {
     orderTracking:   'Order tracking',
     tapToRefresh:    'Refresh',
     updating:        'Updating…',
-    searchPlaceholder: 'Search by name, pincode or order ID...',
+    searchPlaceholder: 'Search name, pincode or order ID',
     liveOrders:      'Live orders',
     results:         n => `${n} result${n !== 1 ? 's' : ''}`,
     noOrders:        'No active orders right now',

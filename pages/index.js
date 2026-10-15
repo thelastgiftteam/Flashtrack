@@ -1,6 +1,10 @@
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import OrderListView from '../components/OrderListView';
+import { demoCards } from '../lib/demoData';
 
-// FlashTrack homepage. Bright, postal-themed (India Post red + yellow on white).
+// FlashTrack homepage. Bright, postal-themed. Colours come from the FlashTrack
+// logo (bolt yellow, flash red, black), which sit close to India Post's own.
 // Styling: Tailwind utility classes + a small <style> block for the postal pieces
 // (perforated stamp, postmark, shipping label). Tailwind's global reset is off,
 // so the page sets its own reset below.
@@ -12,12 +16,12 @@ export default function Home() {
     <div className="ft-page">
       <Head>
         <title>FlashTrack · Branded parcel tracking for India Post shipments</title>
-        <meta name="description" content="One branded tracking link for every order you ship with India Post. Customers search their name, see every scan, and stop asking 'where is my order?'." />
+        <meta name="description" content="One branded tracking link for every order you ship with India Post. Customers find their parcel by name and track it in one tap." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#FFFFFF" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Sans:wght@400;500;600;700&family=Libre+Barcode+128&family=Caveat:wght@600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Instrument+Sans:wght@400;500;600;700&family=Libre+Barcode+128&family=Caveat:wght@600&display=swap" rel="stylesheet" />
       </Head>
       <style>{CSS}</style>
 
@@ -52,7 +56,7 @@ function H2({ children, className = '' }) {
 function WhatsAppButton({ children = 'Start free on WhatsApp', dark = false, className = '' }) {
   return (
     <a href={WHATSAPP} target="_blank" rel="noreferrer"
-      className={`ft-btn inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-semibold ${dark ? 'bg-[#14213D] text-white hover:bg-[#0d1730]' : 'bg-[#D7262E] text-white hover:bg-[#b81f26]'} ${className}`}>
+      className={`ft-btn inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-semibold ${dark ? 'bg-[#121212] text-white hover:bg-[#000000]' : 'bg-[#DF1515] text-white hover:bg-[#C4050A]'} ${className}`}>
       <WaIcon /> {children}
     </a>
   );
@@ -61,7 +65,7 @@ function WhatsAppButton({ children = 'Start free on WhatsApp', dark = false, cla
 function DemoButton({ className = '' }) {
   return (
     <a href="/demo"
-      className={`ft-btn inline-flex items-center justify-center rounded-full border-2 border-[#14213D] px-6 py-3 text-[15px] font-semibold text-[#14213D] hover:bg-[#14213D] hover:text-white ${className}`}>
+      className={`ft-btn inline-flex items-center justify-center rounded-full border-2 border-[#121212] px-6 py-3 text-[15px] font-semibold text-[#121212] hover:bg-[#121212] hover:text-white ${className}`}>
       Open the live demo
     </a>
   );
@@ -78,7 +82,7 @@ function WaIcon({ size = 18 }) {
 function Check({ ok = true }) {
   return ok
     ? <span aria-label="Yes" className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#16884F] text-[15px] font-bold text-white">✓</span>
-    : <span aria-label="No" className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#E9ECF2] text-[15px] font-bold text-[#8A93A6]">✕</span>;
+    : <span aria-label="No" className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#EBEBEE] text-[15px] font-bold text-[#8E8E98]">✕</span>;
 }
 
 // Perforated postage stamp
@@ -121,133 +125,20 @@ function Phone({ children, className = '' }) {
   );
 }
 
-// These mirror the live tracking pages (components/ParcelView.js and
-// components/OrderListView.js), scaled down to fit the phone frame.
+// The phone screens render the real tracking page component with sample
+// data, scaled down. What visitors see here is exactly what customers get.
+const DEMO_BAR = { mode: 'button', text: 'Questions? Chat with us on WhatsApp', link: WHATSAPP, active: true };
 
-const TIMELINE = [
-  ['Taken out for delivery', 'Kakkanad SO', 'Today, 9:42 AM', true],
-  ['Item received at destination', 'Kakkanad SO', 'Today, 6:10 AM'],
-  ['Item dispatched', 'Ernakulam HO', 'Yesterday, 8:55 PM'],
-  ['Item booked', 'Ernakulam HO', 'Yesterday, 4:12 PM'],
-];
-
-function ParcelScreen() {
+function LiveScreen({ sheet = false }) {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { setOrders(demoCards()); setLoading(false); }, []);
   return (
-    <div className="flex h-full flex-col bg-[#F3F5F9] text-[#14213D]">
-      <div className="flex items-center justify-between border-b border-[#E3E7EF] bg-white px-4 pb-2.5 pt-9">
-        <div>
-          <div className="ft-display text-[13px] leading-tight">Your Brand</div>
-          <div className="text-[9.5px] font-semibold text-[#D7262E]">← All orders</div>
-        </div>
-        <div className="rounded-full border-[1.5px] border-[#14213D] px-2.5 py-0.5 text-[9.5px] font-semibold">Share</div>
-      </div>
-
-      <div className="mx-3 mr-4 mt-3 overflow-hidden rounded-lg border-2 border-[#14213D] bg-white shadow-[4px_4px_0_#FFC72C]">
-        <div className="flex items-center justify-between bg-[#D7262E] px-2.5 py-1.5 text-white">
-          <span className="ft-display text-[8.5px]">SPEED POST</span>
-          <span className="rounded border border-white/50 bg-white/15 px-1.5 py-px text-[8px] font-bold tracking-wide">EL695415965IN ⧉</span>
-        </div>
-        <div className="p-2.5">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFF4D1] text-[15px]">🛵</span>
-            <div>
-              <div className="text-[8px] font-semibold text-[#8A93A6]">Current status</div>
-              <div className="ft-display text-[15px] leading-tight text-[#B45309]">Out for delivery</div>
-            </div>
-          </div>
-          <div className="mt-1.5 text-[9.5px]">Taken out for delivery, Kakkanad SO</div>
-          <div className="mt-2.5 flex items-center">
-            {[0, 1, 2, 3].map(i => (
-              <div key={i} className={`flex items-center ${i < 3 ? 'flex-1' : ''}`}>
-                <span className={`h-2 w-2 rounded-full border-[1.5px] ${i <= 2 ? 'border-[#B45309] bg-[#B45309]' : 'border-[#CBD2DE] bg-white'}`} />
-                {i < 3 && <span className={`mx-0.5 h-[2px] flex-1 rounded ${i < 2 ? 'bg-[#B45309]' : 'bg-[#E3E7EF]'}`} />}
-              </div>
-            ))}
-          </div>
-          <div className="mt-1 grid grid-cols-4 text-[7px] font-medium text-[#5A6480]">
-            <span>Booked</span><span className="text-center">In transit</span>
-            <span className="text-center font-bold text-[#14213D]">Out for delivery</span><span className="text-right text-[#8A93A6]">Delivered</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-3 mt-2.5 rounded-xl border border-[#E3E7EF] bg-white p-2.5">
-        {[['From', 'Ernakulam HO', '#14213D'], ['To', 'Kakkanad SO', '#D7262E']].map(([l, v, c], i) => (
-          <div key={l} className="flex gap-2">
-            <div className="flex w-2 flex-col items-center">
-              <span className="mt-0.5 h-2 w-2 rounded-full" style={{ background: c }} />
-              {i === 0 && <span className="my-0.5 flex-1 border-l-[1.5px] border-dashed border-[#8A93A6]" />}
-            </div>
-            <div className={i === 0 ? 'pb-1.5' : ''}>
-              <div className="text-[7.5px] font-semibold text-[#8A93A6]">{l}</div>
-              <div className="text-[10px] font-bold">{v}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mx-3 mt-2.5 rounded-xl border border-[#E3E7EF] bg-white p-2.5">
-        <div className="ft-display text-[11px]">Journey</div>
-        <div className="mt-2 space-y-2">
-          {TIMELINE.map(([e, o, t, first]) => (
-            <div key={e} className="flex gap-2">
-              <span className={`mt-0.5 shrink-0 rounded-full ${first ? 'h-2.5 w-2.5 bg-[#B45309] ring-[3px] ring-[#B45309]/20' : 'ml-[1px] h-2 w-2 bg-[#CBD2DE]'}`} />
-              <div className="min-w-0">
-                <div className={`text-[9.5px] ${first ? 'font-bold' : 'font-semibold text-[#2B3550]'}`}>{e}</div>
-                <div className="text-[8px] text-[#8A93A6]">{o}, {t}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-3 mb-3 mt-auto rounded-full bg-[#1FA855] py-2 text-center text-[9.5px] font-semibold text-white">
-        Questions? Chat with us on WhatsApp
-      </div>
-    </div>
-  );
-}
-
-const ORDERS = [
-  ['Anjali Menon', '695010', 'Delivered', '#16884F', '#E7F6EE', '#16884F'],
-  ['Rahul Krishnan', '682030', 'Out for delivery', '#B45309', '#FFF4D1', '#1D4ED8'],
-  ['Fathima Shirin', '680001', 'Held at post office', '#B45309', '#FFF4D1', '#D7262E'],
-  ['Karthik S', '641002', 'In transit', '#1D4ED8', '#E8EFFE', '#7C3AED'],
-];
-
-function ListScreen() {
-  return (
-    <div className="flex h-full flex-col bg-[#F3F5F9] text-[#14213D]">
-      <div className="flex items-center justify-between border-b border-[#E3E7EF] bg-white px-4 pb-2.5 pt-9">
-        <div>
-          <div className="ft-display text-[13px] leading-tight">Your Brand</div>
-          <div className="flex items-center gap-1 text-[9px] text-[#5A6480]"><span className="h-1.5 w-1.5 rounded-full bg-[#16884F]" />Order tracking</div>
-        </div>
-        <div className="rounded-full bg-[#14213D] px-2.5 py-1 text-[9px] font-semibold text-white">↻ Refresh</div>
-      </div>
-      <div className="border-b border-[#EBB51F] bg-[#FFC72C] px-3 py-2.5">
-        <div className="rounded-lg border-[1.5px] border-[#14213D] bg-white px-2.5 py-1.5 text-[9px] text-[#8A93A6] shadow-[2px_2px_0_#14213D]">🔍 Search by name, pincode or order ID</div>
-      </div>
-      <div className="px-3 pt-2 text-[9px] font-bold text-[#5A6480]">Live orders (4)</div>
-      <div className="mt-1.5 space-y-2 px-3">
-        {ORDERS.map(([n, p, s, c, bg, av]) => (
-          <div key={n} className="rounded-xl border border-[#E3E7EF] bg-white p-2" style={{ borderLeft: `3px solid ${c}` }}>
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[8.5px] font-bold text-white" style={{ background: av }}>
-                {n.split(' ').map(w => w[0]).join('')}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="ft-display truncate text-[10.5px]">{n}</div>
-                <div className="text-[8px] text-[#5A6480]">📍 {p}</div>
-              </div>
-              <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[7.5px] font-bold" style={{ color: c, background: bg }}>{s}</span>
-            </div>
-            <div className="mt-1.5 flex items-center justify-between border-t border-dashed border-[#E3E7EF] pt-1.5">
-              <span className="rounded-md border border-[#E3E7EF] bg-[#F3F5F9] px-1.5 py-0.5 text-[7.5px] font-bold">EL6954159{60 + n.length}IN</span>
-              <span className="rounded-full bg-[#D7262E] px-2 py-0.5 text-[8px] font-bold text-white">Track parcel</span>
-            </div>
-          </div>
-        ))}
+    <div className="ft-embed">
+      <div className="ft-statusbar"><span>9:41</span><span aria-hidden="true">▂▄▆ ▮</span></div>
+      <div className="ft-embed-scroll">
+        <OrderListView embedded brandName="Your Brand" orders={orders} loading={loading}
+          bottomBar={DEMO_BAR} initialSheet={sheet ? 'DM100000002IN' : null} />
       </div>
     </div>
   );
@@ -257,20 +148,20 @@ function ListScreen() {
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E3E7EF] bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[#E4E4E7] bg-white/90 backdrop-blur">
       <Wrap className="flex h-16 items-center justify-between gap-4">
-        <a href="/" className="ft-display flex items-center gap-2 text-[20px] text-[#14213D]">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D7262E] text-[16px] text-white">⚡</span>
-          FlashTrack
+        <a href="/" aria-label="FlashTrack home" className="ft-logo flex items-center gap-2 rounded-full bg-black py-1.5 pl-2.5 pr-4">
+          <img src="/brand/flashtrack-mark.png" alt="" width="40" height="27" className="ft-logo-mark block h-[27px] w-auto" />
+          <img src="/brand/flashtrack-wordmark.png" alt="FlashTrack" width="104" height="16" className="block h-[16px] w-auto" />
         </a>
-        <nav className="hidden items-center gap-8 text-[15px] font-medium text-[#3B4560] md:flex">
-          <a href="#how" className="hover:text-[#D7262E]">How it works</a>
-          <a href="/demo" className="hover:text-[#D7262E]">Demo</a>
-          <a href="#pricing" className="hover:text-[#D7262E]">Pricing</a>
-          <a href="#faq" className="hover:text-[#D7262E]">FAQ</a>
+        <nav className="hidden items-center gap-8 text-[15px] font-medium text-[#3F3F46] md:flex">
+          <a href="#how" className="hover:text-[#DF1515]">How it works</a>
+          <a href="/demo" className="hover:text-[#DF1515]">Demo</a>
+          <a href="#pricing" className="hover:text-[#DF1515]">Pricing</a>
+          <a href="#faq" className="hover:text-[#DF1515]">FAQ</a>
         </nav>
         <a href={WHATSAPP} target="_blank" rel="noreferrer"
-          className="ft-btn rounded-full bg-[#14213D] px-4 py-2 text-[14px] font-semibold text-white hover:bg-[#0d1730] md:px-5">
+          className="ft-btn rounded-full bg-[#121212] px-4 py-2 text-[14px] font-semibold text-white hover:bg-[#000000] md:px-5">
           Start free
         </a>
       </Wrap>
@@ -281,23 +172,23 @@ function Nav() {
 function Hero() {
   return (
     <section className="overflow-hidden bg-white">
-      <Wrap className="grid items-center gap-12 pb-16 pt-12 md:pb-24 md:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+      <Wrap className="grid items-center gap-14 pb-20 pt-12 md:pb-24 md:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#FFF4D1] px-3.5 py-1.5 text-[13px] font-semibold text-[#7A5600]">
-            <span className="h-2 w-2 rounded-full bg-[#D7262E]" /> For brands shipping with India Post
+          <div className="ft-h-in inline-flex items-center gap-2 rounded-full bg-[#FFF3C4] px-3.5 py-1.5 text-[13px] font-semibold text-[#7A5600]" style={{ animationDelay: '.05s' }}>
+            <span className="h-2 w-2 rounded-full bg-[#DF1515]" /> For brands shipping with India Post
           </div>
-          <h1 className="ft-display mt-6 text-[40px] leading-[1.02] text-[#14213D] sm:text-[52px] lg:text-[64px]">
+          <h1 className="ft-display ft-h-in mt-6 text-[42px] leading-[1.0] text-[#121212] sm:text-[54px] lg:text-[66px]" style={{ animationDelay: '.12s' }}>
             Parcel tracking that carries your brand.
           </h1>
-          <p className="mt-6 max-w-[34rem] text-[18px] leading-[1.6] text-[#3B4560]">
-            One link for every order you ship. Customers search their name, see every scan from
-            booking to delivery, and stop messaging you “where is my order?”.
+          <p className="ft-h-in mt-6 max-w-[34rem] text-[18px] leading-[1.6] text-[#3F3F46]" style={{ animationDelay: '.22s' }}>
+            One link for every order you ship. Customers find their parcel by name and track it
+            in one tap, so they stop messaging you “where is my order?”.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="ft-h-in mt-8 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '.3s' }}>
             <WhatsAppButton />
             <DemoButton />
           </div>
-          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] font-medium text-[#3B4560]">
+          <div className="ft-h-in mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] font-medium text-[#3F3F46]" style={{ animationDelay: '.38s' }}>
             <span>✓ ₹750 a month</span>
             <span>✓ Live in 24 hours</span>
             <span>✓ No app, no login for customers</span>
@@ -305,37 +196,60 @@ function Hero() {
         </div>
 
         <div className="relative mx-auto w-full max-w-[460px]">
-          <div className="absolute inset-x-4 bottom-0 top-10 rounded-[36px] bg-[#FFC72C] md:inset-x-0" />
-          <Stamp className="absolute -left-3 top-[38%] z-20 origin-top-left -rotate-[8deg] scale-[0.72] sm:-left-1 sm:top-2 sm:scale-100 md:-left-6">
-            <div className="ft-display text-[13px] leading-none text-[#14213D]">INDIA</div>
-            <div className="mt-1 text-[22px]">📦</div>
-            <div className="ft-display mt-1 text-[15px] leading-none text-[#D7262E]">₹750</div>
-          </Stamp>
-          <Phone className="relative z-10 mx-auto mt-4"><ParcelScreen /></Phone>
-          <Postmark className="ft-postmark-anim absolute -bottom-[72px] -right-1 z-20 w-[140px] text-[#D7262E] sm:-bottom-20 sm:-right-6 sm:w-[160px] md:-bottom-16 md:-right-14 md:w-[190px]" />
+          <div className="ft-hero-block absolute inset-x-6 bottom-14 top-14 rounded-[36px] bg-[#FEC200] md:inset-x-2 lg:bottom-6" />
+          <Streaks className="absolute -left-10 top-0 z-0 w-[78%] sm:-left-16" />
+          <Streaks className="absolute -right-8 bottom-24 z-0 w-[48%] rotate-180 sm:-right-14 lg:bottom-16" late />
+          <div className="ft-hand ft-hint absolute -right-24 top-2 z-20 hidden w-[170px] rotate-[5deg] text-[25px] leading-[1.05] text-[#DF1515] xl:block">
+            it’s the real page, tap Track parcel
+            <svg width="70" height="50" viewBox="0 0 70 50" className="mt-1 block" aria-hidden="true"><path d="M60 4C46 10 30 24 16 44m0 0 1-12m-1 12 11-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </div>
+          <Phone className="ft-rise relative z-10 mx-auto mt-4"><LiveScreen /></Phone>
+          <Postmark className="ft-postmark-anim absolute -right-1 bottom-6 z-20 hidden w-[120px] sm:block text-[#DF1515] sm:-right-6 sm:w-[150px] md:-right-12 md:w-[170px] lg:-bottom-14" />
+          <p className="ft-hand mt-5 text-center text-[24px] text-[#DF1515] xl:hidden">it’s the real page, tap Track parcel</p>
         </div>
       </Wrap>
     </section>
   );
 }
 
-const JOURNEY = ['Item booked', 'Bag dispatched', 'Received at hub', 'Out for delivery', 'Delivered'];
+// Speed streaks, drawn in the style of the logo
+function Streaks({ className = '', late = false }) {
+  return (
+    <svg className={`ft-streaks ${late ? 'is-late' : ''} ${className}`} viewBox="0 0 400 300" aria-hidden="true">
+      <polygon className="s1" points="6,288 396,58 330,128" fill="#DF1515" />
+      <polygon className="s2" points="70,300 380,150 344,196" fill="#C4050A" />
+      <polygon className="s3" points="0,190 300,20 262,66" fill="#FEC200" />
+    </svg>
+  );
+}
+
+const FLOW = [
+  ['🔍', 'Search their name', 'No tracking number to dig out of chat.'],
+  ['⚡', 'Tap Track parcel', 'Opens the live tracking for that parcel.'],
+  ['📮', 'See every India Post scan', 'Booked, dispatched, out for delivery, delivered.'],
+];
 
 function Journey() {
   return (
-    <section className="border-y border-[#E3E7EF] bg-[#F3F5F9]">
-      <Wrap className="py-8">
-        <p className="text-[14px] font-semibold text-[#3B4560]">Every India Post scan, shown to your customer as it happens</p>
-        <ol className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
-          {JOURNEY.map((j, i) => (
-            <li key={j} className="flex items-center gap-3">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-bold ${i === JOURNEY.length - 1 ? 'bg-[#16884F] text-white' : 'bg-white text-[#14213D] ring-1 ring-[#D5DBE6]'}`}>
-                {i === JOURNEY.length - 1 ? '✓' : i + 1}
-              </span>
-              <span className="text-[15px] font-semibold text-[#14213D]">{j}</span>
+    <section className="border-y border-[#E4E4E7] bg-[#F4F4F5]">
+      <Wrap className="py-10">
+        <ol className="grid gap-6 md:grid-cols-3 md:gap-0">
+          {FLOW.map(([icon, t, d], i) => (
+            <li key={t} className="relative flex items-start gap-4 md:pr-10">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[22px] ring-1 ring-[#D9D9DE]">{icon}</span>
+              <div>
+                <div className="text-[13px] font-bold text-[#DF1515]">Step {i + 1}</div>
+                <div className="ft-display text-[19px] leading-tight text-[#121212]">{t}</div>
+                <p className="mt-1 text-[15px] text-[#5C5C66]">{d}</p>
+              </div>
+              {i < FLOW.length - 1 && <span aria-hidden="true" className="absolute right-4 top-2 hidden text-[30px] font-bold leading-none text-[#DF1515] md:block">›</span>}
             </li>
           ))}
         </ol>
+        <p className="mt-7 rounded-2xl border-2 border-dashed border-[#121212] bg-white px-5 py-4 text-[15px] leading-[1.55] text-[#121212]">
+          <b>Tracking site down?</b> Customers still get through. Their tracking number is copied for them
+          and India Post’s own site opens. They paste it, type the captcha, done.
+        </p>
       </Wrap>
     </section>
   );
@@ -354,37 +268,37 @@ function Problem() {
     <section className="bg-white">
       <Wrap className="grid items-center gap-12 py-20 md:py-28 lg:grid-cols-2 lg:gap-16">
         <div>
-          <H2 className="text-[#14213D]">The same question, all day, on WhatsApp.</H2>
-          <p className="mt-5 max-w-[32rem] text-[17px] leading-[1.65] text-[#3B4560]">
+          <H2 className="text-[#121212]">The same question, all day, on WhatsApp.</H2>
+          <p className="mt-5 max-w-[32rem] text-[17px] leading-[1.65] text-[#3F3F46]">
             After a customer pays, your brand goes quiet until the parcel arrives. So they ask.
             Again and again.
           </p>
           <ul className="mt-8 space-y-6">
             {[
               ['💬', 'Your team answers tracking questions instead of selling', 'Every “where is my order?” is a chat someone has to stop and answer.'],
-              ['🏤', 'Held parcels quietly turn into returns', 'When India Post keeps a parcel on hold, the customer often never finds out. It comes back to you.'],
+              ['🔢', 'Tracking numbers get lost in chat', 'Customers scroll for a 13-character number, give up, and message you instead.'],
               ['🔗', 'Courier pages don’t look like you', 'A tracking number and a captcha page is the last thing your customer sees of your brand.'],
             ].map(([icon, t, d]) => (
               <li key={t} className="flex gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4D1] text-[20px]">{icon}</span>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF3C4] text-[20px]">{icon}</span>
                 <div>
-                  <h3 className="text-[17px] font-bold text-[#14213D]">{t}</h3>
-                  <p className="mt-1 text-[15.5px] leading-[1.6] text-[#5A6480]">{d}</p>
+                  <h3 className="text-[17px] font-bold text-[#121212]">{t}</h3>
+                  <p className="mt-1 text-[15.5px] leading-[1.6] text-[#5C5C66]">{d}</p>
                 </div>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="mx-auto w-full max-w-[440px] overflow-hidden rounded-[28px] border border-[#E3E7EF] bg-white shadow-[0_24px_60px_-20px_rgba(20,33,61,0.25)]">
+        <div className="mx-auto w-full max-w-[440px] overflow-hidden rounded-[28px] border border-[#E4E4E7] bg-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between bg-[#075E54] px-5 py-4 text-white">
             <div className="text-[16px] font-semibold">Chats</div>
             <div className="rounded-full bg-[#25D366] px-2.5 py-0.5 text-[12px] font-bold text-[#073B33]">12 unread</div>
           </div>
           <ul>
             {CHATS.map(([n, m, t, u]) => (
-              <li key={n} className="flex items-center gap-3 border-b border-[#EEF1F5] px-5 py-3.5 last:border-b-0">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#DFE5EE] text-[14px] font-bold text-[#3B4560]">
+              <li key={n} className="flex items-center gap-3 border-b border-[#EFEFF1] px-5 py-3.5 last:border-b-0">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E4E4E7] text-[14px] font-bold text-[#3F3F46]">
                   {n[0]}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -407,26 +321,26 @@ function Problem() {
 }
 
 const STEPS = [
-  ['Send your daily shipments', 'Share yesterday’s India Post booking receipts or your shipment sheet. No software to install.'],
+  ['Send us your daily shipments', 'Download the day’s shipment file from your India Post account and send it over. No software to install.'],
   ['We build your tracking page', 'Your page goes live within 24 hours, with your brand name and your WhatsApp button.'],
   ['Share one link with everyone', 'Put the link in your order message. Customers find their parcel by name, pincode or order ID.'],
 ];
 
 function HowItWorks() {
   return (
-    <section id="how" className="bg-[#14213D] text-white">
+    <section id="how" className="bg-[#121212] text-white">
       <Wrap className="py-20 md:py-28">
         <H2 className="max-w-[40rem]">Live in a day. Nothing for you to set up.</H2>
         <ol className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
           <span className="ft-route absolute left-[22px] top-[22px] hidden h-0.5 w-[calc(100%-44px)] md:block" aria-hidden="true" />
           {STEPS.map(([t, d], i) => (
             <li key={t} className="relative flex gap-5 md:block">
-              <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FFC72C] text-[18px] font-extrabold text-[#14213D]">
+              <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FEC200] text-[18px] font-extrabold text-[#121212]">
                 {i + 1}
               </span>
               <div className="md:mt-6">
                 <h3 className="text-[20px] font-bold">{t}</h3>
-                <p className="mt-2 max-w-[22rem] text-[16px] leading-[1.6] text-[#C4CBDA]">{d}</p>
+                <p className="mt-2 max-w-[22rem] text-[16px] leading-[1.6] text-[#C9C9D1]">{d}</p>
               </div>
             </li>
           ))}
@@ -442,27 +356,27 @@ const FEATURES_L = [
   ['6 languages', 'English, Malayalam, Tamil, Hindi, Kannada, Telugu.'],
 ];
 const FEATURES_R = [
-  ['Full scan history', 'Every India Post scan with office name and time.'],
-  ['Held-parcel warning', 'Tells customers to collect a parcel before it’s returned.'],
+  ['One-tap tracking', 'Track parcel opens the live India Post scans for that order.'],
+  ['A backup when tracking sites fail', 'The number is copied and India Post’s site opens. Paste, captcha, done.'],
   ['Your WhatsApp button', 'Customers reach you, not a courier helpline.'],
 ];
 
 function Feature({ t, d, align = 'left' }) {
   return (
     <div className={align === 'right' ? 'lg:text-right' : ''}>
-      <h3 className="text-[17px] font-bold text-[#14213D]">{t}</h3>
-      <p className="mt-1 text-[15px] leading-[1.55] text-[#5A6480]">{d}</p>
+      <h3 className="text-[17px] font-bold text-[#121212]">{t}</h3>
+      <p className="mt-1 text-[15px] leading-[1.55] text-[#5C5C66]">{d}</p>
     </div>
   );
 }
 
 function Tour() {
   return (
-    <section className="bg-[#F3F5F9]">
+    <section className="bg-[#F4F4F5]">
       <Wrap className="py-20 md:py-28">
         <div className="max-w-[40rem]">
-          <H2 className="text-[#14213D]">What your customer sees when they tap the link.</H2>
-          <p className="mt-5 text-[17px] leading-[1.65] text-[#3B4560]">
+          <H2 className="text-[#121212]">What your customer sees when they tap the link.</H2>
+          <p className="mt-5 text-[17px] leading-[1.65] text-[#3F3F46]">
             A clean page in your brand’s name. Built for phones, because that’s where your customers open it.
           </p>
         </div>
@@ -472,8 +386,8 @@ function Tour() {
             {FEATURES_L.map(([t, d]) => <Feature key={t} t={t} d={d} align="right" />)}
           </div>
           <div className="order-1 flex justify-center gap-5 lg:order-2">
-            <Phone className="hidden sm:block"><ListScreen /></Phone>
-            <Phone className="sm:mt-12"><ParcelScreen /></Phone>
+            <Phone className="hidden sm:block"><LiveScreen /></Phone>
+            <Phone className="sm:mt-12"><LiveScreen sheet /></Phone>
           </div>
           <div className="order-3 grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
             {FEATURES_R.map(([t, d]) => <Feature key={t} t={t} d={d} />)}
@@ -492,7 +406,8 @@ const ROWS = [
   ['Your brand name on the page', false],
   ['One link for all your orders', false],
   ['Customers search by their name', false],
-  ['Warns customers when a parcel is on hold', false],
+  ['Tracking number copied for them', false],
+  ['Still works when tracking sites are down', false],
   ['Your WhatsApp button for questions', false],
 ];
 
@@ -500,16 +415,16 @@ function Compare() {
   return (
     <section className="bg-white">
       <Wrap className="py-20 md:py-28">
-        <H2 className="max-w-[40rem] text-[#14213D]">Third-party tracking sites vs your FlashTrack page.</H2>
-        <div className="mt-12 overflow-hidden rounded-[24px] border border-[#E3E7EF]">
-          <div className="grid grid-cols-[1fr_84px_84px] items-center bg-[#F3F5F9] px-5 py-4 text-[13px] font-bold text-[#3B4560] sm:grid-cols-[1fr_160px_160px] sm:px-8 sm:text-[14px]">
+        <H2 className="max-w-[40rem] text-[#121212]">Third-party tracking sites vs your FlashTrack page.</H2>
+        <div className="mt-12 overflow-hidden rounded-[24px] border border-[#E4E4E7]">
+          <div className="grid grid-cols-[1fr_84px_84px] items-center bg-[#F4F4F5] px-5 py-4 text-[13px] font-bold text-[#3F3F46] sm:grid-cols-[1fr_160px_160px] sm:px-8 sm:text-[14px]">
             <span>Feature</span>
             <span className="text-center">Tracking sites</span>
-            <span className="text-center text-[#D7262E]">FlashTrack</span>
+            <span className="text-center text-[#DF1515]">FlashTrack</span>
           </div>
           {ROWS.map(([r, them]) => (
-            <div key={r} className="grid grid-cols-[1fr_84px_84px] items-center border-t border-[#E3E7EF] px-5 py-4 sm:grid-cols-[1fr_160px_160px] sm:px-8">
-              <span className="pr-3 text-[15px] font-medium text-[#14213D] sm:text-[16px]">{r}</span>
+            <div key={r} className="grid grid-cols-[1fr_84px_84px] items-center border-t border-[#E4E4E7] px-5 py-4 sm:grid-cols-[1fr_160px_160px] sm:px-8">
+              <span className="pr-3 text-[15px] font-medium text-[#121212] sm:text-[16px]">{r}</span>
               <span className="flex justify-center"><Check ok={them} /></span>
               <span className="flex justify-center"><Check /></span>
             </div>
@@ -522,29 +437,29 @@ function Compare() {
 
 function Postcard() {
   return (
-    <section className="bg-[#F3F5F9]">
+    <section className="bg-[#F4F4F5]">
       <Wrap className="py-20 md:py-28">
         <div className="ft-postcard relative mx-auto grid max-w-[980px] overflow-hidden rounded-[6px] bg-white md:grid-cols-[1.4fr_1fr]">
-          <div className="p-7 md:border-r md:border-dashed md:border-[#C9D1DE] md:p-12">
-            <p className="ft-display text-[22px] leading-[1.3] text-[#14213D] md:text-[26px]">
+          <div className="p-7 md:border-r md:border-dashed md:border-[#D4D4D8] md:p-12">
+            <p className="ft-display text-[22px] leading-[1.3] text-[#121212] md:text-[26px]">
               “We run a D2C brand ourselves and ship across India with India Post every day.
               We were answering ‘where is my order?’ all day and losing parcels to returns.
               FlashTrack started as our own fix.”
             </p>
-            <div className="ft-hand mt-6 text-[34px] leading-none text-[#D7262E]">Stebin</div>
-            <div className="mt-1 text-[14px] text-[#5A6480]">Founder, FlashTrack</div>
+            <div className="ft-hand mt-6 text-[34px] leading-none text-[#DF1515]">Stebin</div>
+            <div className="mt-1 text-[14px] text-[#5C5C66]">Founder, FlashTrack</div>
           </div>
-          <div className="relative border-t border-dashed border-[#C9D1DE] p-7 md:border-t-0 md:p-12">
+          <div className="relative border-t border-dashed border-[#D4D4D8] p-7 md:border-t-0 md:p-12">
             <Stamp className="ml-auto w-fit rotate-[4deg]">
-              <div className="ft-display text-[12px] leading-none text-[#14213D]">KERALA</div>
+              <div className="ft-display text-[12px] leading-none text-[#121212]">KERALA</div>
               <div className="mt-1 text-[22px]">🌴</div>
-              <div className="ft-display mt-1 text-[13px] leading-none text-[#D7262E]">₹5</div>
+              <div className="ft-display mt-1 text-[13px] leading-none text-[#DF1515]">₹5</div>
             </Stamp>
-            <Postmark className="absolute right-20 top-8 w-[150px] text-[#14213D]/70" top="KOCHI" bottom="KERALA" mid="2026" />
-            <div className="mt-10 space-y-4 text-[16px] text-[#14213D] md:mt-16">
-              <div className="border-b border-[#C9D1DE] pb-2"><span className="text-[#8A93A6]">To </span>Every D2C founder</div>
-              <div className="border-b border-[#C9D1DE] pb-2">shipping with India Post</div>
-              <div className="border-b border-[#C9D1DE] pb-2">Anywhere in India</div>
+            <Postmark className="absolute right-20 top-8 w-[150px] text-[#121212]/70" top="KOCHI" bottom="KERALA" mid="2026" />
+            <div className="mt-10 space-y-4 text-[16px] text-[#121212] md:mt-16">
+              <div className="border-b border-[#D4D4D8] pb-2"><span className="text-[#8E8E98]">To </span>Every D2C founder</div>
+              <div className="border-b border-[#D4D4D8] pb-2">shipping with India Post</div>
+              <div className="border-b border-[#D4D4D8] pb-2">Anywhere in India</div>
             </div>
           </div>
         </div>
@@ -558,6 +473,7 @@ const CONTENTS = [
   'Unlimited orders',
   'Daily updates by our team',
   'Search by name, pincode or order ID',
+  'India Post backup if tracking sites go down',
   '6 languages for your customers',
   'Your WhatsApp button on every page',
   'Setup within 24 hours',
@@ -568,8 +484,8 @@ function Pricing() {
     <section id="pricing" className="bg-white">
       <Wrap className="grid items-center gap-12 py-20 md:py-28 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
         <div>
-          <H2 className="text-[#14213D]">One plan. Less than a day of support calls.</H2>
-          <p className="mt-5 max-w-[30rem] text-[17px] leading-[1.65] text-[#3B4560]">
+          <H2 className="text-[#121212]">One plan. Less than a day of support calls.</H2>
+          <p className="mt-5 max-w-[30rem] text-[17px] leading-[1.65] text-[#3F3F46]">
             Everything included, no setup fee. Message us on WhatsApp and your tracking page
             can be live tomorrow.
           </p>
@@ -580,30 +496,30 @@ function Pricing() {
         </div>
 
         <div className="ft-label mx-auto w-full max-w-[480px] rotate-[-1.2deg] bg-white">
-          <div className="flex items-stretch border-b-[3px] border-[#14213D]">
+          <div className="flex items-stretch border-b-[3px] border-[#121212]">
             <div className="flex-1 p-5">
-              <div className="text-[12px] font-bold text-[#5A6480]">Service</div>
-              <div className="ft-display mt-0.5 text-[22px] text-[#14213D]">FlashTrack Monthly</div>
+              <div className="text-[12px] font-bold text-[#5C5C66]">Service</div>
+              <div className="ft-display mt-0.5 text-[22px] text-[#121212]">FlashTrack Monthly</div>
             </div>
-            <div className="flex w-[92px] items-center justify-center border-l-[3px] border-[#14213D] bg-[#D7262E] text-center font-extrabold leading-tight text-white">
+            <div className="flex w-[92px] items-center justify-center border-l-[3px] border-[#121212] bg-[#DF1515] text-center font-extrabold leading-tight text-white">
               <span className="ft-display text-[13px]">SPEED<br />POST</span>
             </div>
           </div>
-          <div className="grid grid-cols-2 border-b-[3px] border-[#14213D] text-[14px]">
-            <div className="border-r-[3px] border-[#14213D] p-4">
-              <div className="text-[12px] font-bold text-[#5A6480]">From</div>
-              <div className="mt-0.5 font-semibold text-[#14213D]">FlashTrack, Kochi</div>
+          <div className="grid grid-cols-2 border-b-[3px] border-[#121212] text-[14px]">
+            <div className="border-r-[3px] border-[#121212] p-4">
+              <div className="text-[12px] font-bold text-[#5C5C66]">From</div>
+              <div className="mt-0.5 font-semibold text-[#121212]">FlashTrack, Kochi</div>
             </div>
             <div className="p-4">
-              <div className="text-[12px] font-bold text-[#5A6480]">To</div>
-              <div className="mt-0.5 font-semibold text-[#14213D]">Your brand</div>
+              <div className="text-[12px] font-bold text-[#5C5C66]">To</div>
+              <div className="mt-0.5 font-semibold text-[#121212]">Your brand</div>
             </div>
           </div>
-          <div className="border-b-[3px] border-[#14213D] p-5">
-            <div className="text-[12px] font-bold text-[#5A6480]">Contents</div>
+          <div className="border-b-[3px] border-[#121212] p-5">
+            <div className="text-[12px] font-bold text-[#5C5C66]">Contents</div>
             <ul className="mt-3 space-y-2">
               {CONTENTS.map(c => (
-                <li key={c} className="flex gap-3 text-[15px] text-[#14213D]">
+                <li key={c} className="flex gap-3 text-[15px] text-[#121212]">
                   <span className="font-bold text-[#16884F]">✓</span>{c}
                 </li>
               ))}
@@ -611,13 +527,13 @@ function Pricing() {
           </div>
           <div className="flex items-end justify-between gap-4 p-5">
             <div>
-              <div className="text-[12px] font-bold text-[#5A6480]">Postage</div>
+              <div className="text-[12px] font-bold text-[#5C5C66]">Postage</div>
               <div className="flex items-baseline gap-1.5">
-                <span className="ft-display text-[48px] leading-none text-[#14213D]">₹750</span>
-                <span className="text-[15px] text-[#5A6480]">/ month</span>
+                <span className="ft-display text-[48px] leading-none text-[#121212]">₹750</span>
+                <span className="text-[15px] text-[#5C5C66]">/ month</span>
               </div>
             </div>
-            <div className="ft-barcode text-[44px] leading-none text-[#14213D]" aria-hidden="true">FT750IN</div>
+            <div className="ft-barcode text-[44px] leading-none text-[#121212]" aria-hidden="true">FT750IN</div>
           </div>
         </div>
       </Wrap>
@@ -626,35 +542,36 @@ function Pricing() {
 }
 
 const FAQS = [
-  ['Do my customers need to log in or install an app?', 'No. They open your link in any browser, search their name, pincode or order ID, and tap their order.'],
-  ['What do I need to do every day?', 'Share your India Post booking receipts or shipment list. Our team updates your tracking page from there.'],
+  ['Do my customers need to log in or install an app?', 'No. They open your link in any browser, search their name, pincode or order ID, and tap Track parcel.'],
+  ['What do I need to do every day?', 'Send us the day’s shipment file from your India Post account. We add the new parcels to your page.'],
+  ['What happens if the tracking site is down?', 'Customers still get through. Tapping Track parcel copies their tracking number and opens India Post’s own website. They paste the number, type the captcha and see every scan.'],
   ['Which couriers do you support?', 'India Post Speed Post. If you use another courier, message us and we’ll tell you what’s possible.'],
   ['What customer details are shown on the page?', 'Only the customer’s name, pincode and order ID. No phone numbers and no addresses.'],
-  ['How long does setup take?', 'Your tracking page is ready within 24 hours of sharing your first shipment list.'],
+  ['How long does setup take?', 'Your tracking page is ready within 24 hours of sending your first shipment file.'],
   ['Can I put my own WhatsApp number on the page?', 'Yes. Every tracking page shows a button that opens a chat with your business.'],
   ['Can I see it before I pay?', 'Yes. The live demo shows exactly what your customers will see.'],
 ];
 
 function Faq() {
   return (
-    <section id="faq" className="bg-[#F3F5F9]">
+    <section id="faq" className="bg-[#F4F4F5]">
       <Wrap className="grid gap-10 py-20 md:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div>
-          <H2 className="text-[#14213D]">Questions brands ask us.</H2>
-          <p className="mt-5 max-w-[24rem] text-[17px] leading-[1.65] text-[#3B4560]">
+          <H2 className="text-[#121212]">Questions brands ask us.</H2>
+          <p className="mt-5 max-w-[24rem] text-[17px] leading-[1.65] text-[#3F3F46]">
             Can’t find your answer? Ask us on WhatsApp. A real person replies.
           </p>
           <WhatsAppButton className="mt-6">Ask on WhatsApp</WhatsAppButton>
         </div>
-        <div className="divide-y divide-[#D5DBE6] border-y border-[#D5DBE6]">
+        <div className="divide-y divide-[#D9D9DE] border-y border-[#D9D9DE]">
           {FAQS.map(([q, a]) => (
             <details key={q} className="ft-faq group py-5">
-              <summary className="flex items-start justify-between gap-6 text-[17px] font-semibold text-[#14213D]">
+              <summary className="flex items-start justify-between gap-6 text-[17px] font-semibold text-[#121212]">
                 {q}
-                <span className="ft-plus mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[18px] text-[#D7262E] ring-1 ring-[#D5DBE6]">+</span>
+                <span className="ft-plus mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[18px] text-[#DF1515] ring-1 ring-[#D9D9DE]">+</span>
               </summary>
-              <p className="mt-3 max-w-[40rem] pr-12 text-[16px] leading-[1.65] text-[#5A6480]">
-                {a}{q.startsWith('Can I see') && <> <a href="/demo" className="font-semibold text-[#D7262E] underline underline-offset-4">Open the demo</a></>}
+              <p className="mt-3 max-w-[40rem] pr-12 text-[16px] leading-[1.65] text-[#5C5C66]">
+                {a}{q.startsWith('Can I see') && <> <a href="/demo" className="font-semibold text-[#DF1515] underline underline-offset-4">Open the demo</a></>}
               </p>
             </details>
           ))}
@@ -666,10 +583,10 @@ function Faq() {
 
 function FinalCta() {
   return (
-    <section className="relative overflow-hidden bg-[#FFC72C]">
-      <Postmark className="absolute -right-10 -top-6 hidden w-[320px] text-[#14213D]/15 md:block" />
+    <section className="relative overflow-hidden bg-[#FEC200]">
+      <Postmark className="absolute -right-10 -top-6 hidden w-[320px] text-[#121212]/15 md:block" />
       <Wrap className="relative py-20 md:py-24">
-        <h2 className="ft-display max-w-[44rem] text-[36px] leading-[1.05] text-[#14213D] md:text-[56px]">
+        <h2 className="ft-display max-w-[44rem] text-[36px] leading-[1.05] text-[#121212] md:text-[56px]">
           Put your brand on every tracking page.
         </h2>
         <p className="mt-5 max-w-[34rem] text-[18px] leading-[1.6] text-[#3B3000]">
@@ -686,18 +603,15 @@ function FinalCta() {
 
 function Footer() {
   return (
-    <footer className="bg-white">
-      <Wrap className="flex flex-col gap-6 py-10 text-[14px] text-[#5A6480] md:flex-row md:items-center md:justify-between">
-        <div className="ft-display flex items-center gap-2 text-[18px] text-[#14213D]">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#D7262E] text-[14px] text-white">⚡</span>
-          FlashTrack
-        </div>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2">
-          <a href="#how" className="hover:text-[#14213D]">How it works</a>
-          <a href="/demo" className="hover:text-[#14213D]">Demo</a>
-          <a href="#pricing" className="hover:text-[#14213D]">Pricing</a>
-          <a href="#faq" className="hover:text-[#14213D]">FAQ</a>
-          <a href={WHATSAPP} target="_blank" rel="noreferrer" className="hover:text-[#14213D]">WhatsApp</a>
+    <footer className="bg-black text-[#BDBDC4]">
+      <Wrap className="flex flex-col gap-8 py-12 text-[14px] md:flex-row md:items-center md:justify-between">
+        <img src="/brand/flashtrack-logo.png" alt="FlashTrack" width="160" height="131" className="block h-auto w-[140px]" />
+        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-medium">
+          <a href="#how" className="hover:text-[#FEC200]">How it works</a>
+          <a href="/demo" className="hover:text-[#FEC200]">Demo</a>
+          <a href="#pricing" className="hover:text-[#FEC200]">Pricing</a>
+          <a href="#faq" className="hover:text-[#FEC200]">FAQ</a>
+          <a href={WHATSAPP} target="_blank" rel="noreferrer" className="hover:text-[#FEC200]">WhatsApp</a>
         </nav>
         <div>Made in Kochi, Kerala. © {new Date().getFullYear()} FlashTrack</div>
       </Wrap>
@@ -708,46 +622,72 @@ function Footer() {
 // ─── Page CSS (postal pieces, reset, accessibility) ─────────────────
 
 const CSS = `
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-width:0;border-style:solid;border-color:#E3E7EF;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-width:0;border-style:solid;border-color:#E4E4E7;}
 html{scroll-behavior:smooth;scroll-padding-top:72px;}
-body{background:#fff;color:#14213D;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+body{background:#fff;color:#121212;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
 a{text-decoration:none;color:inherit;}
 ul,ol{list-style:none;}
-.ft-display{font-family:'Archivo',system-ui,sans-serif;font-weight:800;font-stretch:112%;letter-spacing:-0.02em;}
+.ft-display{font-family:'Archivo',system-ui,sans-serif;font-weight:800;font-style:italic;font-stretch:112%;letter-spacing:-0.02em;}
 .ft-hand{font-family:'Caveat',cursive;font-weight:600;}
 .ft-barcode{font-family:'Libre Barcode 128',monospace;font-weight:400;}
-.ft-btn{transition:background-color .15s,color .15s;}
-a:focus-visible,summary:focus-visible{outline:3px solid #FFC72C;outline-offset:3px;border-radius:12px;}
+.ft-btn{transition:background-color .15s,color .15s,transform .12s;}
+.ft-btn:active{transform:scale(.97);}
+a:focus-visible,summary:focus-visible{outline:3px solid #FEC200;outline-offset:3px;border-radius:12px;}
 
 /* Phone mockup */
-.ft-phone{width:250px;height:520px;border-radius:42px;background:#14213D;padding:9px;position:relative;
-  box-shadow:0 30px 60px -20px rgba(20,33,61,.45),inset 0 0 0 2px #2a3a5e;flex-shrink:0;}
+.ft-phone{width:250px;height:520px;border-radius:42px;background:#121212;padding:9px;position:relative;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.45),inset 0 0 0 2px #2A2A2E;flex-shrink:0;}
 .ft-phone-screen{width:100%;height:100%;border-radius:34px;overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;}
-.ft-phone-notch{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:76px;height:20px;border-radius:12px;background:#14213D;z-index:2;}
+.ft-phone-notch{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:76px;height:20px;border-radius:12px;background:#121212;z-index:2;}
 @media (min-width:768px){.ft-phone{width:270px;height:560px;}}
 
+/* Live tracking page inside the phone: real component at 390x844, scaled */
+.ft-embed{position:relative;width:390px;height:844px;transform:scale(.5949);transform-origin:top left;background:#fff;overflow:hidden;}
+@media (min-width:768px){.ft-embed{transform:scale(.6462);}}
+.ft-statusbar{height:44px;padding:14px 28px 0 30px;display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#121212;background:#fff;}
+.ft-embed-scroll{height:800px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;}
+.ft-embed-scroll::-webkit-scrollbar{display:none;}
+
+/* Logo */
+.ft-logo{transition:transform .15s ease;}
+.ft-logo:hover .ft-logo-mark{animation:ftZap .5s ease;}
+@keyframes ftZap{0%,100%{transform:none;}30%{transform:translateX(3px) skewX(-8deg);}60%{transform:translateX(-1px);}}
+
+/* Hero load: one sequence. Copy leans in, streaks fly in, phone rises, postmark stamps */
+@keyframes ftHeroIn{from{opacity:0;transform:translateX(-28px) skewX(-8deg);}to{opacity:1;transform:none;}}
+.ft-h-in{animation:ftHeroIn .7s cubic-bezier(.2,.8,.2,1) both;}
+@keyframes ftStreak{from{opacity:0;transform:translate(-90px,50px);}to{opacity:1;transform:none;}}
+.ft-streaks polygon{animation:ftStreak .55s cubic-bezier(.2,.8,.2,1) both;}
+.ft-streaks .s1{animation-delay:.25s;}.ft-streaks .s2{animation-delay:.33s;}.ft-streaks .s3{animation-delay:.4s;}
+.ft-streaks.is-late .s1{animation-delay:.45s;}.ft-streaks.is-late .s2{animation-delay:.52s;}.ft-streaks.is-late .s3{animation-delay:.6s;}
+@keyframes ftRise{from{opacity:0;transform:translateY(36px);}to{opacity:1;transform:none;}}
+.ft-rise{animation:ftRise .8s cubic-bezier(.2,.8,.2,1) .2s both;}
+@keyframes ftBlock{from{transform:scale(.9);opacity:0;}to{transform:none;opacity:1;}}
+.ft-hero-block{animation:ftBlock .6s cubic-bezier(.2,.8,.2,1) .1s both;}
+.ft-hint{animation:ftHeroIn .6s cubic-bezier(.2,.8,.2,1) 1.2s both;}
+
 /* Perforated postage stamp: holes are page-white dots around the edge */
-.ft-stamp{padding:7px;background-color:#FFC72C;
+.ft-stamp{padding:7px;background-color:#FEC200;
   background-image:radial-gradient(circle,#fff 3.2px,transparent 3.6px);
   background-size:12px 12px;background-position:-6px -6px;
-  filter:drop-shadow(0 6px 10px rgba(20,33,61,.18));width:fit-content;}
-.ft-stamp-face{background:#FFF8E1;border:2px solid #14213D;padding:10px 14px;text-align:center;min-width:74px;}
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.18));width:fit-content;}
+.ft-stamp-face{background:#FFF8E1;border:2px solid #121212;padding:10px 14px;text-align:center;min-width:74px;}
 
 /* Postmark */
 .ft-postmark text{font-family:'Archivo',system-ui,sans-serif;}
 @keyframes ft-cancel{0%{opacity:0;transform:scale(1.25) rotate(-14deg);}60%{opacity:1;}100%{opacity:.9;transform:scale(1) rotate(-6deg);}}
-.ft-postmark-anim{transform:rotate(-6deg);opacity:.9;animation:ft-cancel .7s cubic-bezier(.2,.8,.2,1) .5s both;}
+.ft-postmark-anim{transform:rotate(-6deg);opacity:.9;animation:ft-cancel .7s cubic-bezier(.2,.8,.2,1) 1s both;}
 
 /* Dashed route line between steps */
-.ft-route{background-image:linear-gradient(90deg,#FFC72C 50%,transparent 50%);background-size:14px 2px;}
+.ft-route{background-image:linear-gradient(90deg,#FEC200 50%,transparent 50%);background-size:14px 2px;}
 
 /* Postcard */
-.ft-postcard{box-shadow:0 2px 0 #E3E7EF,0 30px 60px -30px rgba(20,33,61,.35);
-  background-image:linear-gradient(90deg,#D7262E 0 12px,#fff 12px 24px,#14213D 24px 36px,#fff 36px 48px);
+.ft-postcard{box-shadow:0 2px 0 #E4E4E7,0 30px 60px -30px rgba(0,0,0,.35);
+  background-image:linear-gradient(90deg,#DF1515 0 12px,#fff 12px 24px,#121212 24px 36px,#fff 36px 48px);
   background-size:48px 6px;background-repeat:repeat-x;background-position:top left;padding-top:6px;}
 
 /* Shipping label */
-.ft-label{border:3px solid #14213D;border-radius:6px;box-shadow:10px 10px 0 #FFC72C;}
+.ft-label{border:3px solid #121212;border-radius:6px;box-shadow:10px 10px 0 #FEC200;}
 
 /* FAQ */
 .ft-faq summary{list-style:none;cursor:pointer;}
@@ -757,7 +697,7 @@ a:focus-visible,summary:focus-visible{outline:3px solid #FFC72C;outline-offset:3
 
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto;}
-  .ft-postmark-anim{animation:none;}
+  .ft-postmark-anim,.ft-h-in,.ft-streaks polygon,.ft-rise,.ft-hero-block,.ft-hint,.ft-logo-mark{animation:none!important;}
   .ft-plus{transition:none;}
 }
 `;
