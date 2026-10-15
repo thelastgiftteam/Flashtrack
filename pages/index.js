@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import OrderListView from '../components/OrderListView';
 import { demoCards } from '../lib/demoData';
+import { parseGrid, parseCsv, normalizeRows } from '../lib/shipmentParse';
 
 // FlashTrack homepage. Bright, postal-themed. Colours come from the FlashTrack
 // logo (bolt yellow, flash red, black), which sit close to India Post's own.
@@ -28,6 +29,7 @@ export default function Home() {
       <Nav />
       <main>
         <Hero />
+        <TryIt />
         <Journey />
         <Problem />
         <HowItWorks />
@@ -188,6 +190,9 @@ function Hero() {
             <WhatsAppButton />
             <DemoButton />
           </div>
+          <a href="#try" className="ft-h-in mt-4 inline-block text-[15px] font-semibold text-[#DF1515] underline decoration-2 underline-offset-4" style={{ animationDelay: '.34s' }}>
+            Or see it with your own India Post file ↓
+          </a>
           <div className="ft-h-in mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] font-medium text-[#3F3F46]" style={{ animationDelay: '.38s' }}>
             <span>✓ ₹750 a month</span>
             <span>✓ Ready in 24 hours</span>
@@ -206,6 +211,113 @@ function Hero() {
           <Phone className="ft-rise relative z-10 mx-auto mt-4"><LiveScreen /></Phone>
           <Postmark className="ft-postmark-anim absolute -right-1 bottom-6 z-20 hidden w-[120px] sm:block text-[#DF1515] sm:-right-6 sm:w-[150px] md:-right-12 md:w-[170px] lg:-bottom-14" />
           <p className="ft-hand mt-5 text-center text-[24px] text-[#DF1515] xl:hidden">this is the real page, try it</p>
+        </div>
+      </Wrap>
+    </section>
+  );
+}
+
+// ─── Try it with your own file ─────────────────────────────────────
+// The visitor drops their India Post Excel and sees their own page at once.
+// The file is read in the browser; nothing is sent anywhere until they sign up.
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayLabel = ymd => `${Number(ymd.slice(8, 10))} ${MON[Number(ymd.slice(5, 7)) - 1]}`;
+
+function TryIt() {
+  const [rows, setRows] = useState(null);
+  const [brand, setBrand] = useState('');
+  const [problem, setProblem] = useState('');
+  const [over, setOver] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function read(file) {
+    setProblem(''); setRows(null);
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    setBusy(true);
+    try {
+      let grid;
+      if (name.endsWith('.csv') || name.endsWith('.txt')) grid = parseCsv(await file.text());
+      else if (name.endsWith('.xlsx')) { const { default: readXlsxFile } = await import('read-excel-file'); grid = await readXlsxFile(file); }
+      else if (name.endsWith('.xls')) { setProblem('This is an old Excel file (.xls). Open it and save it as .xlsx, then try again.'); return; }
+      else { setProblem('Choose an Excel (.xlsx) or CSV file.'); return; }
+      const out = parseGrid(grid);
+      if (out.error) { setProblem(out.error); return; }
+      const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+      const ok = normalizeRows(out.rows, today).ok;
+      if (!ok.length) { setProblem('We couldn’t find any tracking numbers in that file.'); return; }
+      setRows(ok);
+    } catch {
+      setProblem('We couldn’t read that file. If it opens in Excel, save it as .xlsx and try again.');
+    } finally { setBusy(false); }
+  }
+
+  function start() {
+    try { sessionStorage.setItem('ft_try', JSON.stringify({ brandName: brand.trim(), rows })); } catch { /* still sign up */ }
+    window.location.href = '/signup?try=1';
+  }
+
+  const orders = (rows || []).slice().sort((a, b) => (a.shippedOn < b.shippedOn ? 1 : -1)).map(r => ({
+    name: r.name || '—', orderId: r.orderRef, pincode: r.pincode, trackingId: r.trackingId,
+    trackingLink: '', shippedOn: dayLabel(r.shippedOn), isNew: false,
+  }));
+
+  return (
+    <section id="try" className="border-t border-[#E4E4E7] bg-[#FFF8DB]">
+      <Wrap className="grid items-center gap-10 py-16 md:py-20 lg:grid-cols-[1fr_auto] lg:gap-16">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#121212] px-3.5 py-1.5 text-[13px] font-semibold text-white">Try it now · 10 seconds</div>
+          <H2 className="mt-5 max-w-[34rem]">See your own tracking page with your real parcels.</H2>
+          {!rows ? (
+            <>
+              <p className="mt-4 max-w-[32rem] text-[17px] leading-[1.6] text-[#3F3F46]">
+                Drop the Excel file you download from India Post. Your customers’ parcels appear on the phone straight away.
+              </p>
+              <label
+                onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+                onDrop={e => { e.preventDefault(); setOver(false); read(e.dataTransfer.files[0]); }}
+                className={`mt-7 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors ${over ? 'border-[#DF1515] bg-white' : 'border-[#121212]/40 bg-white/70 hover:border-[#121212]'}`}>
+                <input type="file" accept=".xlsx,.csv,.xls,.txt" className="sr-only" onChange={e => { read(e.target.files[0]); e.target.value = ''; }} />
+                <span className="text-[36px]" aria-hidden="true">{busy ? '⏳' : '📄'}</span>
+                <span className="mt-2 text-[17px] font-bold text-[#121212]">{busy ? 'Reading your file…' : 'Drop your India Post Excel here, or tap to choose'}</span>
+                <span className="mt-1 text-[14px] text-[#5C5C66]">.xlsx or .csv</span>
+              </label>
+              {problem && <p className="mt-4 rounded-xl bg-[#FDECEC] px-4 py-3 text-[14px] text-[#8E1A20]">⚠ {problem}</p>}
+              <p className="mt-4 text-[14px] text-[#5C5C66]">🔒 Your file stays on your device. Nothing is uploaded unless you sign up.</p>
+            </>
+          ) : (
+            <>
+              <p className="mt-4 max-w-[32rem] text-[17px] leading-[1.6] text-[#3F3F46]">
+                <b className="text-[#121212]">Found {rows.length} parcel{rows.length > 1 ? 's' : ''}.</b> This is the page your customers would get. Try searching a name or pincode on the phone.
+              </p>
+              <label className="mt-6 block max-w-[24rem]">
+                <span className="text-[14px] font-semibold text-[#3F3F46]">Your brand name</span>
+                <input value={brand} onChange={e => setBrand(e.target.value)} maxLength={80} placeholder="e.g. WT Frames"
+                  className="mt-1.5 block w-full rounded-xl border-2 border-[#121212] bg-white px-4 py-3 text-[16px] outline-none focus:border-[#DF1515]" />
+              </label>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button onClick={start} className="ft-btn rounded-full bg-[#DF1515] px-6 py-3.5 text-[15px] font-semibold text-white hover:bg-[#C4050A]">
+                  Make this my page · 14 days free
+                </button>
+                <button onClick={() => { setRows(null); setProblem(''); }} className="ft-btn rounded-full border-2 border-[#121212] px-6 py-3 text-[15px] font-semibold text-[#121212] hover:bg-[#121212] hover:text-white">
+                  Try another file
+                </button>
+              </div>
+              <p className="mt-4 text-[14px] text-[#5C5C66]">These {rows.length} parcels go live on your page as soon as you sign up. No card needed.</p>
+            </>
+          )}
+        </div>
+        <div className="mx-auto">
+          <Phone>
+            {rows ? (
+              <div className="ft-embed">
+                <div className="ft-statusbar"><span>9:41</span><span aria-hidden="true">▂▄▆ ▮</span></div>
+                <div className="ft-embed-scroll">
+                  <OrderListView embedded brandName={brand.trim() || 'Your Brand'} orders={orders} loading={false} bottomBar={DEMO_BAR} />
+                </div>
+              </div>
+            ) : <LiveScreen />}
+          </Phone>
         </div>
       </Wrap>
     </section>

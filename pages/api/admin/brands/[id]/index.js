@@ -1,7 +1,7 @@
 // One brand: everything on its page in the admin console, and edits.
 import { api, str, Problem, canManage } from '../../../../../lib/api';
 import { q, one } from '../../../../../lib/db';
-import { access, validCode, refreshPage, logEvent, todayIST } from '../../../../../lib/brands';
+import { access, validCode, refreshPage, logEvent, todayIST, usage } from '../../../../../lib/brands';
 import { pageFields, updateBrand } from '../../../app/brand';
 
 export const config = { api: { bodyParser: { sizeLimit: '1mb' } } };
@@ -32,7 +32,7 @@ export default api({
     const { po_password, po_username, ...rest } = b;
     return {
       brand: { ...rest, hasPostOfficeLogin: !!(po_username || po_password) },
-      access: access(b), manager, users, imports, events, stats,
+      access: access(b), manager, users, imports, events, stats, usage: await usage(b.id),
       canManage: canManage(staff, b),
     };
   },

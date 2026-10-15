@@ -87,3 +87,12 @@ brand's paid-until date:
 The DigitalOcean droplet (`proxy.flashtrack.io`) only existed for India Post's API.
 Nothing in this system uses it. Delete it to stop the ~$4/month charge, unless
 India Post approves the API later.
+
+## Customer counts
+
+Each brand's page counts customers who open it (each phone once a day) and
+Track taps, in the `page_stats` table. Brands see "customers checked their
+parcel themselves this week" on their Home screen; the team sees it on the
+brand's Overview. If the table hasn't been created yet, counting is skipped
+and the page still works. Run `db/schema.sql` again to create it.
+

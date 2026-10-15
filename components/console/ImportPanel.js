@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, Button, Tabs, call, toast, shrinkImage } from './ui';
 import { parseGrid, parseCsv, parseLines, normalizeRows } from '../../lib/shipmentParse';
 
 // Add shipments three ways. Everything is shown for checking before saving.
 // addUrl: POST { rows, source }   ocrUrl: POST { image, mimeType }
-export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
+export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone, initialRows }) {
   const [mode, setMode] = useState('excel');
   const [rows, setRows] = useState(null);
   const [source, setSource] = useState('excel');
@@ -17,6 +17,9 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
   const [existing, setExisting] = useState(new Set());
   const fileRef = useRef(null);
   const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+
+  // Rows handed over (from the homepage file) go straight to the check step
+  useEffect(() => { if (initialRows?.length) show(initialRows, 'excel'); }, [initialRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function reset() { setRows(null); setProblem(''); setResult(null); setText(''); setProgress(''); setExisting(new Set()); }
 

@@ -32,6 +32,8 @@ export default function Home() {
               <p className="fc-hint" style={{ marginTop: 10 }}>Put this one link in every order message. Customers find their parcel by name.</p>
             </Card>
 
+            <SavedCard u={d.usage} />
+
             <div className="fc-grid fc-grid-stats">
               <Stat label="Added today" value={d.stats.today} />
               <Stat label="Last 7 days" value={d.stats.week} />
@@ -68,5 +70,35 @@ export default function Home() {
         );
       }}
     </AppFrame>
+  );
+}
+
+// The number that shows what FlashTrack does for them
+function SavedCard({ u }) {
+  if (!u) return null;
+  const n = u.week_views;
+  return (
+    <div className="fc-saved">
+      {n > 0 ? (
+        <>
+          <div className="fc-saved-n">{n.toLocaleString('en-IN')}</div>
+          <div>
+            <div className="fc-saved-t">{n === 1 ? 'customer' : 'customers'} checked their parcel themselves this week</div>
+            <div className="fc-saved-h">That’s up to {n.toLocaleString('en-IN')} “where is my order?” {n === 1 ? 'message' : 'messages'} you didn’t have to answer.
+              {u.week_tracks > 0 && <> They tapped Track {u.week_tracks.toLocaleString('en-IN')} {u.week_tracks === 1 ? 'time' : 'times'}.</>}
+              {u.all_views > n && <> {u.all_views.toLocaleString('en-IN')} since you started.</>}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="fc-saved-n">0</div>
+          <div>
+            <div className="fc-saved-t">customers checked their parcel this week</div>
+            <div className="fc-saved-h">Send your link with every order. Each customer who checks here is one less “where is my order?” message for you.</div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

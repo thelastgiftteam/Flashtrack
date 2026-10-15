@@ -1,7 +1,7 @@
 // Everything the brand dashboard needs on load.
 import { api } from '../../../lib/api';
 import { one, q } from '../../../lib/db';
-import { access, todayIST, TRIAL_DAYS, GRACE_DAYS } from '../../../lib/brands';
+import { access, todayIST, usage, TRIAL_DAYS, GRACE_DAYS } from '../../../lib/brands';
 
 export default api({
   async GET(req, res, { user, brand }) {
@@ -22,7 +22,7 @@ export default api({
       },
       access: access(brand),
       rules: { trialDays: TRIAL_DAYS, graceDays: GRACE_DAYS },
-      stats, lastImport: last, manager,
+      stats, lastImport: last, manager, usage: await usage(brand.id),
     };
   },
 }, { auth: 'user' });
