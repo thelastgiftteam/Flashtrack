@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import BrandBar from './BrandBar';
 import { C, FONT_HREF, BASE_CSS, statusOf, statusStyle } from '../lib/ftTheme';
@@ -29,8 +29,62 @@ function initials(name = '') {
 function isInternal(link = '') {
   return link.startsWith('/') || /flashtrack\.io\//i.test(link);
 }
+const INDIA_POST = 'https://www.indiapost.gov.in/';
 
-function OrderCard({ order, isNew }) {
+function copyText(text) {
+  try { return navigator.clipboard.writeText(text); } catch { return Promise.reject(); }
+}
+
+// Shown when speedposttrack.io is down: copy the number, open India Post.
+function IndiaPostSheet({ tid, onClose }) {
+  const [copied, setCopied] = useState(false);
+  function copy() { copyText(tid).then(() => setCopied(true), () => {}); }
+  useEffect(() => {
+    const k = e => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [onClose]);
+
+  const step = n => (
+    <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: C.ink, color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{n}</span>
+  );
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Track on India Post" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(20,33,61,.45)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: C.paper, borderRadius: '22px 22px 0 0', padding: '10px 20px calc(22px + env(safe-area-inset-bottom))', boxShadow: '0 -12px 40px -12px rgba(20,33,61,.35)' }}>
+        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.line, margin: '0 auto 14px' }} />
+        <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', right: 14, top: 12, width: 32, height: 32, borderRadius: '50%', border: 'none', background: C.mist, color: C.ink, fontSize: 14, cursor: 'pointer' }}>✕</button>
+
+        <div className="ft-display" style={{ fontSize: 20, paddingRight: 40 }}>Track on India Post</div>
+        <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>Live tracking is busy right now. It takes 3 steps on the India Post site.</div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {step(1)}
+            <button onClick={copy} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px', borderRadius: 12, border: `2px dashed ${copied ? C.green : C.ink}`, background: copied ? '#E7F6EE' : C.mist, color: C.ink, cursor: 'pointer' }}>
+              <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tid}</span>
+              <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: copied ? C.green : C.red }}>{copied ? '✓ Copied' : 'Copy'}</span>
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {step(2)}
+            <a href={INDIA_POST} target="_blank" rel="noopener noreferrer" onClick={copy}
+              style={{ flex: 1, textAlign: 'center', padding: '13px 14px', borderRadius: 12, background: C.red, color: '#fff', fontSize: 15, fontWeight: 700 }}>
+              Open India Post ↗
+            </a>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {step(3)}
+            <span style={{ fontSize: 14, color: C.ink, lineHeight: 1.4 }}>Paste the number, type the captcha, tap <b>Search</b>.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderCard({ order, isNew, fallback, onFallback }) {
   const [copied, setCopied] = useState(false);
   const status = statusOf(order.status);
   const st = statusStyle(order.status);
@@ -73,7 +127,12 @@ function OrderCard({ order, isNew }) {
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{copied ? 'Copied' : (tid || 'Awaiting tracking no.')}</span>
           {tid && !copied && <span aria-hidden="true" style={{ color: C.soft }}>⧉</span>}
         </button>
-        {link && (
+        {tid && (fallback || !link) && /speedposttrack\.io|^$/i.test(link || '') ? (
+          <button onClick={() => onFallback(tid)}
+            style={{ flexShrink: 0, padding: '9px 18px', borderRadius: 999, border: 'none', background: C.red, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            Track parcel
+          </button>
+        ) : link && (
           <a href={link} {...(isInternal(link) ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
             style={{ flexShrink: 0, padding: '9px 18px', borderRadius: 999, background: C.red, color: '#fff', fontSize: 14, fontWeight: 700 }}>
             Track parcel
@@ -115,8 +174,23 @@ function LangPicker({ langs, lang, setLang }) {
 export default function OrderListView({
   brandName = 'Order Tracking', orders = [], loading, error, refreshing, onRefresh,
   bottomBar, t = EN, langs, lang, setLang, showSearch = true, banner = null, syncTime,
+  forceFallback = false,
 }) {
   const [q, setQ] = useState('');
+  const [trackerDown, setTrackerDown] = useState(false);
+  const [sheetTid, setSheetTid] = useState(null);
+  const closeSheet = useCallback(() => setSheetTid(null), []);
+
+  // Only ask about speedposttrack if some order actually links there
+  const usesSpt = orders.some(o => /speedposttrack\.io/i.test(o.trackingLink || ''));
+  useEffect(() => {
+    if (!usesSpt || forceFallback) return;
+    let gone = false;
+    fetch('/api/tracker-status').then(r => r.json()).then(d => { if (!gone) setTrackerDown(d.up === false); }).catch(() => {});
+    return () => { gone = true; };
+  }, [usesSpt, forceFallback]);
+  const fallback = forceFallback || trackerDown;
+
   const s = q.toLowerCase().trim();
   const shown = orders.filter(o => !s
     || o.name?.toLowerCase().includes(s) || o.orderId?.toLowerCase().includes(s)
@@ -222,7 +296,7 @@ export default function OrderListView({
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {g.items.map((o, i) => (
-                <OrderCard key={o.orderId || o.trackingId || `${gi}-${i}`} order={o} isNew={o.isNew && !s && gi === 0 && i === 0} />
+                <OrderCard key={o.orderId || o.trackingId || `${gi}-${i}`} order={o} isNew={o.isNew && !s && gi === 0 && i === 0} fallback={fallback} onFallback={setSheetTid} />
               ))}
             </div>
           </section>
@@ -230,6 +304,7 @@ export default function OrderListView({
       </main>
 
       <BrandBar bar={bottomBar} />
+      {sheetTid && <IndiaPostSheet tid={sheetTid} onClose={closeSheet} />}
     </>
   );
 }
