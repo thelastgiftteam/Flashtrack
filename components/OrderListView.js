@@ -129,7 +129,10 @@ function OrderCard({ order, isNew, index, fallback, onFallback, t, embedded }) {
   const [flash, setFlash] = useState(false);
   const tid = order.trackingId || '';
   const link = order.trackingLink || '';
-  const usePanel = tid && (fallback || !link) && /speedposttrack\.io|^$/i.test(link);
+  // Our own parcel pages need the India Post API (not live), so links to them
+  // open the India Post panel too. Speedposttrack opens directly unless it's down.
+  const spt = /speedposttrack\.io/i.test(link);
+  const usePanel = !!tid && (!link || isInternal(link) || (fallback && spt));
   const sameTab = isInternal(link) && !embedded;
 
   function copy() {
