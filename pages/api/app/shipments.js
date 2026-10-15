@@ -22,6 +22,12 @@ export async function listShipments(brandId, query) {
 }
 
 export async function addShipments(res, brand, body, by) {
+  // Preview check: which of these are already saved for this brand?
+  if (Array.isArray(body?.check)) {
+    const ids = body.check.slice(0, 5000).map(cleanTracking).filter(Boolean);
+    const found = ids.length ? await q('select tracking_id from shipments where brand_id = $1 and tracking_id = any($2)', [brand.id, ids]) : [];
+    return { existing: found.map(r => r.tracking_id) };
+  }
   const rows = Array.isArray(body?.rows) ? body.rows.slice(0, 5000) : [];
   if (!rows.length) throw new Problem(400, 'No shipments to add.');
   const source = ['excel', 'photo', 'manual'].includes(body.source) ? body.source : 'manual';

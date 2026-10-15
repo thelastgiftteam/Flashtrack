@@ -14,10 +14,20 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
   const [text, setText] = useState('');
   const [over, setOver] = useState(false);
   const [progress, setProgress] = useState('');
+  const [existing, setExisting] = useState(new Set());
   const fileRef = useRef(null);
   const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
 
-  function reset() { setRows(null); setProblem(''); setResult(null); setText(''); setProgress(''); }
+  function reset() { setRows(null); setProblem(''); setResult(null); setText(''); setProgress(''); setExisting(new Set()); }
+
+  // Mark rows already on the page before anything is saved
+  async function show(list, src) {
+    setSource(src); setRows(list); setExisting(new Set());
+    try {
+      const out = await call(addUrl, { method: 'POST', body: { check: list.map(r => r.trackingId) } });
+      setExisting(new Set(out.existing || []));
+    } catch { /* preview still works without it */ }
+  }
 
   async function readSheet(file) {
     reset();
@@ -39,8 +49,7 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
       }
       const out = parseGrid(grid);
       if (out.error) { setProblem(out.error); return; }
-      setSource('excel');
-      setRows(out.rows);
+      show(out.rows, 'excel');
     } catch (e) {
       setProblem('Could not read that file. If it opens in Excel, save it as .xlsx and try again.');
     }
@@ -60,7 +69,7 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
         all.push(...out.rows);
       }
       if (!all.length) setProblem('No tracking numbers found. Take the photo straight on, in good light, with the whole receipt in the frame.');
-      else { setSource('photo'); setRows(all); }
+      else show(all, 'photo');
     } catch (e) {
       setProblem(e.message);
     } finally {
@@ -72,8 +81,7 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
     setProblem(''); setResult(null);
     const out = parseLines(text);
     if (!out.length) { setProblem('No tracking numbers found. Put one parcel per line, like: Anjali Menon 682030 EL123456789IN'); return; }
-    setSource('manual');
-    setRows(out);
+    show(out, 'manual');
   }
 
   function edit(i, key, val) {
@@ -98,6 +106,8 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
 
   const checked = rows ? normalizeRows(rows, today) : null;
   const badSet = new Set((checked?.bad || []).map(b => b.trackingId));
+  const newCount = checked ? checked.ok.filter(r => !existing.has(r.trackingId)).length : 0;
+  const dupInFile = rows ? rows.length - (checked.ok.length + checked.bad.length) : 0;
 
   return (
     <div className="fc-stack">
@@ -149,8 +159,14 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
       </Card>
 
       {rows && (
-        <Card title={`Check before adding: ${checked.ok.length} shipment${checked.ok.length !== 1 ? 's' : ''}`}
+        <Card title={`Check before adding: ${newCount} new shipment${newCount !== 1 ? 's' : ''}`}
           action={<div className="fc-row"><Button variant="ghost" size="sm" onClick={reset}>Start over</Button></div>} pad={false}>
+          {(existing.size > 0 || dupInFile > 0) && (
+            <div className="fc-alert is-info" style={{ margin: '14px 18px 0' }}>
+              {existing.size > 0 && <>{existing.size} already on the page (marked grey) will be skipped. </>}
+              {dupInFile > 0 && <>{dupInFile} repeated in this file will be added once.</>}
+            </div>
+          )}
           {checked.bad.length > 0 && (
             <div className="fc-alert is-warn" style={{ margin: '14px 18px 0' }}>
               {checked.bad.length} row{checked.bad.length > 1 ? 's have' : ' has'} a tracking number that looks wrong (marked red). Fix or remove {checked.bad.length > 1 ? 'them' : 'it'}, or they’ll be skipped.
@@ -162,12 +178,13 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
               <tbody>
                 {rows.map((r, i) => {
                   const bad = badSet.has(r.trackingId);
+                  const dup = existing.has(String(r.trackingId).replace(/\s+/g, '').toUpperCase());
                   return (
-                    <tr key={i}>
+                    <tr key={i} style={dup ? { opacity: 0.45 } : undefined} title={dup ? 'Already on the page' : undefined}>
                       <td><input className="fc-input fc-mono" style={{ padding: '6px 8px', minWidth: 150, borderColor: bad ? '#DF1515' : undefined }} value={r.trackingId} onChange={e => edit(i, 'trackingId', e.target.value.toUpperCase())} /></td>
                       <td><input className="fc-input" style={{ padding: '6px 8px', minWidth: 150 }} value={r.name} onChange={e => edit(i, 'name', e.target.value)} /></td>
                       <td><input className="fc-input" style={{ padding: '6px 8px', width: 90 }} inputMode="numeric" value={r.pincode} onChange={e => edit(i, 'pincode', e.target.value)} /></td>
-                      <td className="fc-small fc-muted">{r.orderRef || '—'}</td>
+                      <td className="fc-small fc-muted">{dup ? <span className="fc-pill is-grey">Already on page</span> : (r.orderRef || '—')}</td>
                       <td className="fc-small fc-muted" style={{ whiteSpace: 'nowrap' }}>{r.shippedOn || 'Today'}</td>
                       <td><button className="fc-x" aria-label="Remove" onClick={() => remove(i)}>✕</button></td>
                     </tr>
@@ -178,7 +195,7 @@ export default function ImportPanel({ addUrl, ocrUrl, pageUrl, onDone }) {
           </div>
           <div className="fc-row-between" style={{ padding: 16, borderTop: '1px solid #F1F1F3' }}>
             <span className="fc-small fc-muted">Parcels already on the page are skipped automatically.</span>
-            <Button onClick={save} busy={busy} disabled={!checked.ok.length}>Add {checked.ok.length} to the page</Button>
+            <Button onClick={save} busy={busy} disabled={!newCount}>{newCount ? `Add ${newCount} to the page` : 'Nothing new to add'}</Button>
           </div>
         </Card>
       )}
