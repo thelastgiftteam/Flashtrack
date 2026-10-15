@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdminFrame from '../../components/console/AdminFrame';
-import { Card, Stat, Empty, AccessPill, Pill, useData, Loading, fmtWhen, fmtDate, rupees } from '../../components/console/ui';
+import { Card, Stat, Empty, AccessPill, Pill, useData, Loading, fmtWhen, fmtDate } from '../../components/console/ui';
 
 function BrandRows({ rows, show, empty }) {
   if (!rows.length) return <Empty icon="✓" title={empty} />;
@@ -39,8 +39,8 @@ export default function Today() {
             <div className="fc-grid fc-grid-4">
               <Stat label="Pages live" value={data.counts.live} hint={`${data.counts.total} brands in total`} />
               <Stat label="On free trial" value={data.counts.trial} />
-              <Stat label="Payment due" value={data.counts.overdue + data.counts.off} tone={data.counts.overdue + data.counts.off ? 'red' : undefined} hint={`${data.counts.off} pages off`} />
-              <Stat label="Received this month" value={rupees(data.money.month)} tone="green" hint={`${data.shipmentsToday} shipments added today`} />
+              <Stat label="Payment due" value={data.counts.overdue + data.counts.off} tone={data.counts.overdue + data.counts.off ? 'red' : undefined} hint={`${data.counts.off} page${data.counts.off === 1 ? '' : 's'} off`} />
+              <Stat label="Renewals in 7 days" value={data.renewals.length} hint={`${data.shipmentsToday} shipments added today`} />
             </div>
 
             {me.role === 'manager' && (
@@ -58,7 +58,7 @@ export default function Today() {
                 <BrandRows rows={filt(data.problems)} empty="Everyone has paid"
                   show={b => <><AccessPill access={b.access} /><div className="fc-small fc-muted" style={{ marginTop: 3 }}>since {fmtDate(b.access.until)}</div></>} />
               </Card>
-              <Card title="Renewals in the next 7 days" pad={false}>
+              <Card title="Renewals in the next 7 days" action={<a className="fc-link fc-small" href="https://dashboard.razorpay.com/" target="_blank" rel="noreferrer">Razorpay ↗</a>} pad={false}>
                 <BrandRows rows={filt(data.renewals)} empty="No renewals this week"
                   show={b => <><AccessPill access={b.access} /><div className="fc-small fc-muted" style={{ marginTop: 3 }}>{b.access.daysLeft === 0 ? 'today' : `in ${b.access.daysLeft} day${b.access.daysLeft > 1 ? 's' : ''}`}</div></>} />
               </Card>

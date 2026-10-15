@@ -30,16 +30,12 @@ export default api({
       if (b.plan === 'pro' && a.live) todo.push(b);
       if (new Date(b.created_at).getTime() > weekAgo) fresh.push(b);
     }
-    const [money] = await q(
-      `select coalesce(sum(amount) filter (where paid_on >= date_trunc('month', $1::date)), 0)::int as month,
-              coalesce(sum(amount) filter (where paid_on = $1::date), 0)::int as today
-         from payments`, [today]);
     const [ship] = await q(
       `select count(*)::int as today from shipments where created_at >= ($1::date)::timestamp - interval '5 hours 30 minutes'`, [today]);
     const pick = b => ({ id: b.id, code: b.code, name: b.name, plan: b.plan, access: b.access, manager: b.manager_name, managerId: b.manager_id, lastImport: b.last_import, uploadedToday: b.uploaded_today });
     renewals.sort((a, b) => a.access.daysLeft - b.access.daysLeft);
     return {
-      me: staff, counts, money, shipmentsToday: ship.today,
+      me: staff, counts, shipmentsToday: ship.today,
       todo: todo.map(pick), renewals: renewals.map(pick), problems: problems.map(pick), fresh: fresh.map(pick),
     };
   },

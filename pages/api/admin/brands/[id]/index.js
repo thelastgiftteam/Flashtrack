@@ -17,13 +17,11 @@ export default api({
   async GET(req, res, { staff }) {
     const b = await loadBrand(req.query.id);
     const today = todayIST();
-    const [users, imports, payments, events, [stats]] = await Promise.all([
+    const [users, imports, events, [stats]] = await Promise.all([
       q('select id, email, name, created_at from brand_users where brand_id = $1 order by created_at', [b.id]),
       q(`select i.source, i.added, i.skipped, i.created_at, s.name as staff_name, u.email as user_email
            from imports i left join staff s on s.id = i.by_staff left join brand_users u on u.id = i.by_user
           where i.brand_id = $1 order by i.created_at desc limit 15`, [b.id]),
-      q(`select p.*, s.name as staff_name from payments p left join staff s on s.id = p.recorded_by
-          where p.brand_id = $1 order by p.paid_on desc, p.id desc limit 30`, [b.id]),
       q(`select e.kind, e.text, e.created_at, s.name as staff_name from brand_events e left join staff s on s.id = e.staff_id
           where e.brand_id = $1 order by e.created_at desc limit 40`, [b.id]),
       q(`select count(*)::int as total, count(*) filter (where shipped_on = $2::date)::int as today
@@ -33,7 +31,7 @@ export default api({
     const { po_password, po_username, ...rest } = b;
     return {
       brand: { ...rest, hasPostOfficeLogin: !!(po_username || po_password) },
-      access: access(b), manager, users, imports, payments, events, stats,
+      access: access(b), manager, users, imports, events, stats,
       canManage: canManage(staff, b),
     };
   },

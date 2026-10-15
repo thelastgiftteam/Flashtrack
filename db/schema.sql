@@ -76,21 +76,7 @@ create table if not exists imports (
 );
 create index if not exists imports_brand_idx on imports(brand_id, created_at desc);
 
--- Payments you record (Razorpay can write here later)
-create table if not exists payments (
-  id          bigint generated always as identity primary key,
-  brand_id    uuid not null references brands(id) on delete cascade,
-  amount      int not null,                          -- rupees
-  months      int not null default 1,
-  method      text not null default 'upi',
-  reference   text not null default '',
-  paid_on     date not null default current_date,
-  recorded_by uuid references staff(id) on delete set null,
-  created_at  timestamptz not null default now()
-);
-create index if not exists payments_brand_idx on payments(brand_id, paid_on desc);
-
--- Timeline on each brand: notes, pauses, payments, password resets
+-- Timeline on each brand: notes, pauses, renewals, password resets
 create table if not exists brand_events (
   id         bigint generated always as identity primary key,
   brand_id   uuid not null references brands(id) on delete cascade,
@@ -109,5 +95,4 @@ alter table brands       enable row level security;
 alter table brand_users  enable row level security;
 alter table shipments    enable row level security;
 alter table imports      enable row level security;
-alter table payments     enable row level security;
 alter table brand_events enable row level security;
