@@ -3,7 +3,7 @@ import Head from 'next/head';
 import OrderListView from '../components/OrderListView';
 import { C, FONT_HREF, BASE_CSS } from '../lib/ftTheme';
 
-const BG_REFRESH_MS = 5 * 60 * 1000;
+const BG_REFRESH_MS = 30 * 60 * 1000; // shipments change once a day; no need to poll often
 
 // ─── Static generation ────────────────────────────────────────────
 export async function getStaticPaths() {
@@ -56,7 +56,7 @@ export default function TrackingPage({ code, config }) {
   const fetchOrders = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);
     try {
-      const res  = await fetch(`/api/orders?code=${code}&t=${Date.now()}`);
+      const res  = await fetch(`/api/orders?code=${code}`); // no cache-buster: lets Vercel serve the cached copy
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setOrders(data.orders || []);
