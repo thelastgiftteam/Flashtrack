@@ -96,3 +96,13 @@ parcel themselves this week" on their Home screen; the team sees it on the
 brand's Overview. If the table hasn't been created yet, counting is skipped
 and the page still works. Run `db/schema.sql` again to create it.
 
+## Signups (team follow-up)
+
+Admin → **Signups** lists brands from the last 120 days in five tabs: New,
+Called, Set up, Paid, Not interested. Each row has Call / WhatsApp buttons,
+whether they've added parcels, trial days, manager and the last call note.
+"Log call" saves a note and moves the stage. Paid is automatic once a brand
+has a paid-until date (+1 month). The menu badge counts signups from the last
+30 days nobody has called. Needs the `lead_stage` column: run
+`db/schema.sql` again.
+

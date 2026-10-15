@@ -36,6 +36,9 @@ create table if not exists brands (
   created_at     timestamptz not null default now()
 );
 create index if not exists brands_manager_idx on brands(manager_id);
+-- Where a new signup is in the team's follow-up: new, called, setup, lost
+-- ("Paid" is worked out from the paid-until date, not stored)
+alter table brands add column if not exists lead_stage text not null default 'new';
 
 -- People who log in to a brand's dashboard
 create table if not exists brand_users (
